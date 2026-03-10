@@ -1,0 +1,105 @@
+﻿version: 1
+application: pooli-be
+
+metrics:
+  - key: request_rate
+    description: Total requests per second for pooli-be
+    required: true
+    unit: rps
+    aggregation: service
+    window: 5m
+    promql: |
+      sum(
+        rate(
+          http_server_requests_seconds_count{
+            application="pooli-be",
+            uri!~".*actuator.*"
+          }[5m]
+        )
+      )
+
+  - key: error_rate
+    description: Ratio of 5xx requests over all requests
+    required: true
+    unit: ratio
+    aggregation: service
+    window: 5m
+    promql: |
+      sum(
+        rate(
+          http_server_requests_seconds_count{
+            application="pooli-be",
+            status=~"5..",
+            uri!~".*actuator.*"
+          }[5m]
+        )
+      )
+      /
+      clamp_min(
+        sum(
+          rate(
+            http_server_requests_seconds_count{
+              application="pooli-be",
+              uri!~".*actuator.*"
+            }[5m]
+          )
+        ),
+        0.001
+      )
+
+  - key: p95_latency_ms
+    description: Service-level p95 latency in milliseconds
+    required: true
+    unit: ms
+    aggregation: service
+    window: 5m
+    promql: |
+      histogram_quantile(
+        0.95,
+        sum by (le) (
+          rate(
+            http_server_requests_seconds_bucket{
+              application="pooli-be",
+              uri!~".*actuator.*"
+            }[5m]
+          )
+        )
+      ) * 1000
+
+  - key: active_db_connections
+    description: Number of active Hikari DB connections
+    required: false
+    unit: count
+    aggregation: service
+    window: instant
+    promql: |
+      hikari_connections_active{application="pooli-be"}
+
+  - key: jvm_memory_used_ratio
+    description: JVM heap usage ratio
+    required: false
+    unit: ratio
+    aggregation: service
+    window: instant
+    promql: |
+      sum(jvm_memory_used_bytes{application="pooli-be", area="heap"})
+      /
+      clamp_min(
+        sum(jvm_memory_max_bytes{application="pooli-be", area="heap"}),
+        1
+      )
+
+labels:
+  required:
+    - application
+  recommended:
+    - instance
+    - uri
+    - method
+    - status
+  forbidden:
+    - userId
+    - sessionId
+    - traceId
+    - rawPath
+    - queryString
