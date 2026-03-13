@@ -1,4 +1,4 @@
-﻿prometheus:
+prometheus:
   base_url: http://localhost:9090
   timeout_seconds: 15
   step_seconds: 300

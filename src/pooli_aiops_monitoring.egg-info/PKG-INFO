@@ -1,0 +1,79 @@
+Metadata-Version: 2.4
+Name: pooli-aiops-monitoring
+Version: 0.1.0
+Summary: PyOD-based AIOps scaffold for pooli-be monitoring
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: joblib>=1.4
+Requires-Dist: numpy>=1.26
+Requires-Dist: pandas>=2.2
+Requires-Dist: pyod>=2.0
+Requires-Dist: PyYAML>=6.0
+Requires-Dist: requests>=2.32
+Requires-Dist: scikit-learn>=1.5
+
+# pooli-monitoring
+
+`pooli-be` 모니터링을 위한 `PyOD` 기반 AIOps 스캐폴드입니다.
+
+## 목적
+
+이 저장소는 `pooli-be` 애플리케이션 레포와 분리되어 있습니다.
+
+- `trainer`는 Prometheus 메트릭에서 정상 패턴을 학습합니다.
+- `detector`는 최신 메트릭 구간을 읽고, feature를 만든 뒤, 이상 점수를 계산하고, 필요하면 Alertmanager로 알림을 보냅니다.
+- `pooli-be`는 나중에 메트릭만 노출하면 되고, 모델 코드는 이 저장소에 유지합니다.
+
+## 구조
+
+```text
+pooli-monitoring/
+  config/
+    metrics_contract.example.yaml
+    settings.example.yaml
+  artifacts/
+    .gitkeep
+  src/pooli_aiops/
+    __init__.py
+    __main__.py
+    alerting.py
+    cli.py
+    config.py
+    contracts.py
+    detector.py
+    features.py
+    modeling.py
+    prometheus_client.py
+    trainer.py
+  pyproject.toml
+  README.md
+```
+
+## 빠른 시작
+
+1. 가상환경을 생성합니다.
+2. `pip install -e .` 로 의존성을 설치합니다.
+3. `config/settings.example.yaml` 을 `config/settings.yaml` 로 복사한 뒤 Prometheus와 Alertmanager 주소를 수정합니다.
+4. `config/metrics_contract.example.yaml` 을 `config/metrics_contract.yaml` 로 복사한 뒤 필요하면 PromQL을 수정합니다.
+5. 모델을 학습합니다.
+6. detector를 실행합니다.
+
+예시 명령:
+
+```bash
+python -m pooli_aiops train --settings config/settings.yaml --contract config/metrics_contract.yaml
+python -m pooli_aiops detect --settings config/settings.yaml --contract config/metrics_contract.yaml --dry-run
+```
+
+## 현재 전제
+
+- Prometheus를 메트릭의 기준 데이터 소스로 사용합니다.
+- contract 파일이 논리 메트릭 이름과 실제 PromQL 매핑을 담당합니다.
+- PyOD는 시계열 예측 전용 라이브러리가 아니기 때문에 window 기반 feature engineering을 사용합니다.
+- 처음에는 `ECOD`, `HBOS`, `IForest` 같은 가벼운 모델부터 시작하는 것을 권장합니다.
+
+## pooli-be 연동의 다음 단계
+
+나중에 `pooli-be`가 contract를 만족하는 메트릭을 노출해야 합니다.
+모니터링 코드는 `request_rate`, `error_rate`, `p95_latency_ms` 같은 논리 키를 계속 사용합니다.
+실제 raw metric 이름이 바뀌더라도 contract 파일만 수정하면 되도록 설계했습니다.

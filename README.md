@@ -1,4 +1,4 @@
-﻿# pooli-monitoring
+# pooli-monitoring
 
 `pooli-be` 모니터링을 위한 `PyOD` 기반 AIOps 스캐폴드입니다.
 
