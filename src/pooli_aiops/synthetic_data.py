@@ -19,7 +19,6 @@ METRIC_COLUMNS = [
     "traffic_dlq_total",
     "traffic_stream_oldest_pending_idle_seconds",
     "traffic_hydrate_total",
-    "traffic_tick_lags",
     "traffic_refill_total",
 ]
 
@@ -87,7 +86,6 @@ def _base_metrics(periods: int, freq_seconds: int, rng: np.random.Generator) -> 
     pending_message = 8 + (5 * load) + rng.normal(0, 1.8, size=periods)
     enqueue_latency = 4 + (1.4 * load) + rng.normal(0, 0.6, size=periods)
     oldest_pending_idle = 1.3 + (0.7 * load) + rng.normal(0, 0.25, size=periods)
-    tick_lags = 0.14 + (0.07 * load) + rng.normal(0, 0.03, size=periods)
 
     dlq_rate = rng.poisson(0.02 + (0.01 * load), size=periods).astype(float)
     hydrate_rate = rng.poisson(1.0 + (0.5 * load), size=periods).astype(float)
@@ -109,7 +107,6 @@ def _base_metrics(periods: int, freq_seconds: int, rng: np.random.Generator) -> 
         "traffic_stream_requests_tps": requests_tps,
         "traffic_stream_enqueue_latency": enqueue_latency,
         "traffic_stream_oldest_pending_idle_seconds": oldest_pending_idle,
-        "traffic_tick_lags": tick_lags,
         "dlq_rate": dlq_rate,
         "hydrate_rate": hydrate_rate,
         "refill_rate": refill_rate,
@@ -172,7 +169,6 @@ def _apply_event(
         metrics["traffic_stream_requests_tps"][event_slice] += 28 * envelope + (2 * noise)
         metrics["traffic_stream_enqueue_latency"][event_slice] += 60 * envelope + (5 * noise)
         metrics["traffic_stream_oldest_pending_idle_seconds"][event_slice] += 12 * envelope + (0.5 * noise)
-        metrics["traffic_tick_lags"][event_slice] += 0.9 * envelope + (0.03 * noise)
         metrics["dlq_rate"][event_slice] += rng.poisson(0.5 + (1.5 * envelope), size=window)
         metrics["hydrate_rate"][event_slice] += rng.poisson(2.0 + (2.5 * envelope), size=window)
         metrics["refill_rate"][event_slice] += rng.poisson(1.0 + (2.0 * envelope), size=window)
@@ -184,7 +180,6 @@ def _apply_event(
         metrics["traffic_stream_requests_tps"][event_slice] -= 4 * envelope
         metrics["traffic_stream_enqueue_latency"][event_slice] += 120 * envelope + (8 * noise)
         metrics["traffic_stream_oldest_pending_idle_seconds"][event_slice] += 4 * envelope + (0.4 * noise)
-        metrics["traffic_tick_lags"][event_slice] += 1.4 * envelope + (0.05 * noise)
         metrics["dlq_rate"][event_slice] += rng.poisson(1.0 + (3.0 * envelope), size=window)
         metrics["hydrate_rate"][event_slice] += rng.poisson(1.0 + (1.5 * envelope), size=window)
         metrics["refill_rate"][event_slice] += rng.poisson(0.5 + (1.0 * envelope), size=window)
@@ -196,7 +191,6 @@ def _apply_event(
         metrics["traffic_stream_requests_tps"][event_slice] += 10 * envelope + noise
         metrics["traffic_stream_enqueue_latency"][event_slice] += 20 * envelope + (3 * noise)
         metrics["traffic_stream_oldest_pending_idle_seconds"][event_slice] += 5 * envelope + (0.3 * noise)
-        metrics["traffic_tick_lags"][event_slice] += 0.45 * envelope + (0.03 * noise)
         metrics["dlq_rate"][event_slice] += rng.poisson(3.0 + (8.0 * envelope), size=window)
         metrics["hydrate_rate"][event_slice] += rng.poisson(2.0 + (4.0 * envelope), size=window)
         metrics["refill_rate"][event_slice] += rng.poisson(1.5 + (3.0 * envelope), size=window)
@@ -208,7 +202,6 @@ def _apply_event(
         metrics["traffic_stream_requests_tps"][event_slice] += 8 * envelope + noise
         metrics["traffic_stream_enqueue_latency"][event_slice] += 42 * envelope + (4 * noise)
         metrics["traffic_stream_oldest_pending_idle_seconds"][event_slice] += 18 * envelope + (0.6 * noise)
-        metrics["traffic_tick_lags"][event_slice] += 0.65 * envelope + (0.03 * noise)
         metrics["dlq_rate"][event_slice] += rng.poisson(0.5 + (2.0 * envelope), size=window)
         metrics["hydrate_rate"][event_slice] -= 0.4 * envelope
         metrics["refill_rate"][event_slice] += rng.poisson(1.0 + (2.0 * envelope), size=window)
@@ -225,7 +218,6 @@ def _finalize_frame(
     requests_tps = np.round(np.clip(metrics["traffic_stream_requests_tps"], 0, None), 3)
     enqueue_latency = np.round(np.clip(metrics["traffic_stream_enqueue_latency"], 0, None), 3)
     oldest_pending_idle = np.round(np.clip(metrics["traffic_stream_oldest_pending_idle_seconds"], 0, None), 3)
-    tick_lags = np.round(np.clip(metrics["traffic_tick_lags"], 0, None), 4)
 
     dlq_total = np.cumsum(np.rint(np.clip(metrics["dlq_rate"], 0, None)).astype(int))
     hydrate_total = np.cumsum(np.rint(np.clip(metrics["hydrate_rate"], 0, None)).astype(int))
@@ -241,7 +233,6 @@ def _finalize_frame(
             "traffic_dlq_total": dlq_total,
             "traffic_stream_oldest_pending_idle_seconds": oldest_pending_idle,
             "traffic_hydrate_total": hydrate_total,
-            "traffic_tick_lags": tick_lags,
             "traffic_refill_total": refill_total,
             "scenario_id": scenario_ids.astype(int),
             "state_label": state_labels,
@@ -376,4 +367,7 @@ def generate_datasets(config: SyntheticDatasetConfig) -> dict[str, Any]:
         "feature_rows": len(feature_dataset),
         "event_count": len(event_frame),
     }
+
+
+
 

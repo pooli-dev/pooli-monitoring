@@ -7,14 +7,14 @@
   "future_seconds": 60,
   "rolling_window": 30,
   "raw_rows": 86400,
-  "feature_rows": 85902,
-  "event_count": 26,
+  "feature_rows": 85998,
+  "event_count": 25,
   "label_distribution": {
-    "backlog": 6136,
-    "consumer_slowdown": 4487,
-    "dlq_burst": 4968,
-    "latency_spike": 5437,
-    "normal": 65372
+    "backlog": 4356,
+    "consumer_slowdown": 5123,
+    "dlq_burst": 4685,
+    "latency_spike": 4917,
+    "normal": 67319
   },
   "split_distribution": {
     "test": 12960,
