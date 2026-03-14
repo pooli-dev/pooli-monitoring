@@ -4,7 +4,7 @@
   step_seconds: 15
 
 alertmanager:
-  enabled: false
+  enabled: true
   base_url: http://localhost:9093
   route: /api/v2/alerts
   default_labels:
