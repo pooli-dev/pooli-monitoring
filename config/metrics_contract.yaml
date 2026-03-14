@@ -1,44 +1,93 @@
 ﻿version: 1
-application: pooli-be-demo
+application: pooli-be
 
 metrics:
   - key: traffic_stream_length
+    description: Redis stream length
+    required: true
+    unit: count
+    aggregation: service
+    window: instant
     promql: |
-      max(traffic_stream_length)
+      max(traffic_stream_length{application="pooli-be"})
 
   - key: traffic_stream_pending_message
+    description: Redis stream pending message count
+    required: true
+    unit: count
+    aggregation: service
+    window: instant
     promql: |
-      max(traffic_stream_pending_messages)
+      max(traffic_stream_pending_messages{application="pooli-be"})
 
   - key: traffic_stream_requests_tps
+    description: Enqueue request TPS
+    required: true
+    unit: rps
+    aggregation: service
+    window: instant
     promql: |
-      max(traffic_stream_requests_tps)
+      max(traffic_stream_requests_tps{application="pooli-be"})
 
   - key: traffic_stream_enqueue_latency
+    description: Average enqueue latency in seconds over 5 minutes
+    required: true
+    unit: seconds
+    aggregation: service
+    window: 5m
     promql: |
-      sum(rate(traffic_stream_enqueue_latency_seconds_sum[5m]))
+      sum(rate(traffic_stream_enqueue_latency_seconds_sum{application="pooli-be"}[5m]))
       /
-      clamp_min(sum(rate(traffic_stream_enqueue_latency_seconds_count[5m])), 0.001)
+      clamp_min(
+        sum(rate(traffic_stream_enqueue_latency_seconds_count{application="pooli-be"}[5m])),
+        0.001
+      )
 
   - key: traffic_dlq_total
+    description: Total DLQ count across all reasons
+    required: true
+    unit: count
+    aggregation: service
+    window: instant
     promql: |
-      max(traffic_dlq_total)
+      sum(traffic_dlq_total{application="pooli-be"})
 
   - key: traffic_stream_oldest_pending_idle_seconds
+    description: Oldest pending idle seconds
+    required: true
+    unit: seconds
+    aggregation: service
+    window: instant
     promql: |
-      max(traffic_stream_oldest_pending_idle_seconds)
+      max(traffic_stream_oldest_pending_idle_seconds{application="pooli-be"})
 
   - key: traffic_hydrate_total
+    description: Total hydrate count across pool types
+    required: true
+    unit: count
+    aggregation: service
+    window: instant
     promql: |
-      max(traffic_hydrate_total)
-
-  - key: traffic_tick_lags
-    promql: |
-      sum(rate(traffic_tick_lag_seconds_sum[5m]))
-      /
-      clamp_min(sum(rate(traffic_tick_lag_seconds_count[5m])), 0.001)
+      sum(traffic_hydrate_total{application="pooli-be"})
 
   - key: traffic_refill_total
+    description: Total refill count across pool types and results
+    required: true
+    unit: count
+    aggregation: service
+    window: instant
     promql: |
-      max(traffic_refill_total)
+      sum(traffic_refill_total{application="pooli-be"})
 
+labels:
+  required:
+    - application
+  recommended:
+    - instance
+    - job
+  forbidden:
+    - userId
+    - sessionId
+    - traceId
+    - rawPath
+    - queryString

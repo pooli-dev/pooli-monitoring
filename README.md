@@ -47,9 +47,12 @@ pooli-monitoring/
 예시 명령:
 
 ```bash
+cd /opt/pooli-monitoring
+source .venv/bin/activate
 python -m pooli_aiops train --settings config/settings.yaml --contract config/metrics_contract.yaml
 python -m pooli_aiops detect --settings config/settings.yaml --contract config/metrics_contract.yaml --dry-run
 ```
+
 
 ## 현재 전제
 
