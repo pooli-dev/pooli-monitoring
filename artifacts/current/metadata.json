@@ -1,0 +1,51 @@
+{
+  "model_name": "ecod",
+  "contamination": 0.01,
+  "threshold": 26.987718399947834,
+  "feature_columns": [
+    "request_rate",
+    "p95_latency_ms",
+    "jvm_memory_used_ratio",
+    "request_rate__delta1",
+    "request_rate__pct_change1",
+    "request_rate__roll_mean",
+    "request_rate__roll_std",
+    "p95_latency_ms__delta1",
+    "p95_latency_ms__pct_change1",
+    "p95_latency_ms__roll_mean",
+    "p95_latency_ms__roll_std",
+    "jvm_memory_used_ratio__delta1",
+    "jvm_memory_used_ratio__pct_change1",
+    "jvm_memory_used_ratio__roll_mean",
+    "jvm_memory_used_ratio__roll_std"
+  ],
+  "feature_medians": {
+    "request_rate": 0.0035087719298245,
+    "p95_latency_ms": 16.60245235,
+    "jvm_memory_used_ratio": 0.1583568707005523,
+    "request_rate__delta1": 0.0,
+    "request_rate__pct_change1": 0.0,
+    "request_rate__roll_mean": 0.0035087719298245,
+    "request_rate__roll_std": 0.0,
+    "p95_latency_ms__delta1": 0.0,
+    "p95_latency_ms__pct_change1": 0.0,
+    "p95_latency_ms__roll_mean": 14.773269550000002,
+    "p95_latency_ms__roll_std": 0.0,
+    "jvm_memory_used_ratio__delta1": 0.0020920502175529043,
+    "jvm_memory_used_ratio__pct_change1": 0.014473548636522837,
+    "jvm_memory_used_ratio__roll_mean": 0.15926376310557505,
+    "jvm_memory_used_ratio__roll_std": 0.0021493772759991277
+  },
+  "application": "pooli-be",
+  "trained_at": "2026-03-12T13:32:27.237818+00:00",
+  "start": "2026-03-11T13:32:26.182376+00:00",
+  "end": "2026-03-12T13:32:26.182376+00:00",
+  "raw_columns": [
+    "request_rate",
+    "p95_latency_ms",
+    "jvm_memory_used_ratio"
+  ],
+  "rolling_window": 3,
+  "step_seconds": 10,
+  "training_rows": 58
+}

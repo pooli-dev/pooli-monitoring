@@ -1,0 +1,44 @@
+﻿version: 1
+application: pooli-be-demo
+
+metrics:
+  - key: traffic_stream_length
+    promql: |
+      max(traffic_stream_length)
+
+  - key: traffic_stream_pending_message
+    promql: |
+      max(traffic_stream_pending_messages)
+
+  - key: traffic_stream_requests_tps
+    promql: |
+      max(traffic_stream_requests_tps)
+
+  - key: traffic_stream_enqueue_latency
+    promql: |
+      sum(rate(traffic_stream_enqueue_latency_seconds_sum[5m]))
+      /
+      clamp_min(sum(rate(traffic_stream_enqueue_latency_seconds_count[5m])), 0.001)
+
+  - key: traffic_dlq_total
+    promql: |
+      max(traffic_dlq_total)
+
+  - key: traffic_stream_oldest_pending_idle_seconds
+    promql: |
+      max(traffic_stream_oldest_pending_idle_seconds)
+
+  - key: traffic_hydrate_total
+    promql: |
+      max(traffic_hydrate_total)
+
+  - key: traffic_tick_lags
+    promql: |
+      sum(rate(traffic_tick_lag_seconds_sum[5m]))
+      /
+      clamp_min(sum(rate(traffic_tick_lag_seconds_count[5m])), 0.001)
+
+  - key: traffic_refill_total
+    promql: |
+      max(traffic_refill_total)
+
