@@ -11,6 +11,22 @@ from .modeling import align_feature_frame, load_artifacts, top_deviations
 from .prometheus_client import PrometheusClient, build_range_frame
 
 
+def _format_detected_at(timestamp: datetime) -> str:
+    """알림 메시지에 넣을 탐지 시각 문자열을 만든다."""
+    local_time = timestamp.astimezone()
+    return local_time.strftime("%Y-%m-%d %H:%M:%S %Z")
+
+
+def _format_top_features(top_features: list[dict[str, float | str]], limit: int = 3) -> str:
+    """상위 이상 feature를 읽기 쉬운 한 줄 문자열로 만든다."""
+    formatted: list[str] = []
+    for item in top_features[:limit]:
+        formatted.append(
+            f"{item['feature']}(현재 {float(item['value']):.2f}, 기준 {float(item['median']):.2f})"
+        )
+    return ", ".join(formatted) if formatted else "주요 지표 정보 없음"
+
+
 def run_detection(
     settings: AppSettings,
     contract: ContractFile,
@@ -71,6 +87,8 @@ def run_detection(
 
     if is_anomaly and not dry_run:
         alert_client = AlertmanagerClient(settings.alertmanager)
+        detected_at = _format_detected_at(now)
+        top_feature_text = _format_top_features(top_features)
         alert_client.send_anomaly(
             labels={
                 "service": contract.application,
@@ -78,9 +96,13 @@ def run_detection(
                 "model": str(metadata.get("model_name", settings.model.name)),
             },
             annotations={
-                "summary": f"PyOD anomaly detected for {contract.application}",
-                "description": f"score={score:.6f}, threshold={threshold:.6f}",
-                "top_features": ", ".join(item["feature"] for item in top_features),
+                "summary": f"{contract.application} 이상 탐지 발생",
+                "description": (
+                    f"탐지 점수 {score:.2f}가 임계값 {threshold:.2f}를 초과했습니다. "
+                    f"탐지 시각: {detected_at}. "
+                    f"주요 지표: {top_feature_text}"
+                ),
+                "top_features": top_feature_text,
             },
         )
 

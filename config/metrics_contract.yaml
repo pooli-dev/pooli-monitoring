@@ -36,12 +36,14 @@ metrics:
     aggregation: service
     window: 5m
     promql: |
-      sum(rate(traffic_stream_enqueue_latency_seconds_sum{application="pooli-be"}[5m]))
-      /
-      clamp_min(
-        sum(rate(traffic_stream_enqueue_latency_seconds_count{application="pooli-be"}[5m])),
-        0.001
-      )
+      (
+        sum(rate(traffic_stream_enqueue_latency_seconds_sum{application="pooli-be"}[5m]))
+        /
+        clamp_min(
+          sum(rate(traffic_stream_enqueue_latency_seconds_count{application="pooli-be"}[5m])),
+          0.001
+        )
+      ) or vector(0)
 
   - key: traffic_dlq_total
     description: Total DLQ count across all reasons
@@ -50,7 +52,7 @@ metrics:
     aggregation: service
     window: instant
     promql: |
-      sum(traffic_dlq_total{application="pooli-be"})
+      sum(traffic_dlq_total{application="pooli-be"}) or vector(0)
 
   - key: traffic_stream_oldest_pending_idle_seconds
     description: Oldest pending idle seconds
@@ -68,7 +70,7 @@ metrics:
     aggregation: service
     window: instant
     promql: |
-      sum(traffic_hydrate_total{application="pooli-be"})
+      sum(traffic_hydrate_total{application="pooli-be"}) or vector(0)
 
   - key: traffic_refill_total
     description: Total refill count across pool types and results
@@ -77,7 +79,7 @@ metrics:
     aggregation: service
     window: instant
     promql: |
-      sum(traffic_refill_total{application="pooli-be"})
+      sum(traffic_refill_total{application="pooli-be"}) or vector(0)
 
 labels:
   required:
