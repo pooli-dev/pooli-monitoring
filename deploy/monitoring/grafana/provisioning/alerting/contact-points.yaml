@@ -8,6 +8,5 @@ contactPoints:
         type: discord
         settings:
           url: $DISCORD_WEBHOOK_URL
-          grafana_url: $GF_SERVER_ROOT_URL
-          title: '{{ template "discord.custom.title" . }}'
-          message: '{{ template "discord.custom.message" . }}'
+          title: '{{ template "discord.logs.title" . }}'
+          message: '{{ template "discord.logs.message" . }}'
