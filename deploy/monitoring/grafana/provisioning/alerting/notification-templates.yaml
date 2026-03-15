@@ -5,7 +5,7 @@ templates:
     name: discord.custom.title
     template: |
       {{ define "discord.custom.title" -}}
-      [{{ .Status | upper }}] {{ .CommonAnnotations.summary }}
+      [{{ .Status | toUpper }}] {{ .CommonAnnotations.summary }}
       {{- end }}
 
   - orgId: 1
