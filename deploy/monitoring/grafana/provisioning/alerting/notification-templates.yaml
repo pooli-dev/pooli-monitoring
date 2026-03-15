@@ -4,35 +4,34 @@ templates:
   - orgId: 1
     name: discord.custom.title
     template: |
-      {{ if eq .Status "firing" }}
-      [FIRING] {{ .CommonLabels.alertname }} ({{ .CommonLabels.severity }})
-      {{ else }}
-      [RESOLVED] {{ .CommonLabels.alertname }} ({{ .CommonLabels.severity }})
-      {{ end }}
+      {{ define "discord.custom.title" -}}
+      [{{ .Status | upper }}] {{ .CommonAnnotations.summary }}
+      {{- end }}
 
   - orgId: 1
     name: discord.custom.message
     template: |
+      {{ define "discord.custom.message" -}}
       상태: {{ .Status }}
       알람 수: firing={{ len .Alerts.Firing }}, resolved={{ len .Alerts.Resolved }}
-      심각도: {{ .CommonLabels.severity }}
-      요약: {{ .CommonAnnotations.summary }}
-      설명: {{ .CommonAnnotations.description }}
 
-      {{ if gt (len .Alerts.Firing) 0 }}
-      🔹 상세 로그:
+      {{- if .Alerts.Firing }}
       {{ range .Alerts.Firing }}
-      - 에러 코드: {{ .Annotations.errorCode }}
-        로그 메시지: {{ if gt (len .Annotations.description) 200 }}
-          {{ slice .Annotations.description 0 200 }}...(truncated)
-        {{ else }}
-          {{ .Annotations.description }}
-        {{ end }}
-        로그 값: 
-        {{- range .Value }}
-           - {{ .var }}: {{ .value }}
-        {{- end }}
+      심각도: {{ index .Labels "severity" }}
+      {{ with index .Labels "service" }}서비스: {{ . }}
+      {{ end }}{{ with index .Labels "host" }}호스트: {{ . }}
+      {{ end }}요약: {{ .Annotations.summary }}
+      설명: {{ .Annotations.description }}
+      값: {{ .ValueString }}
+      {{ with .DashboardURL }}대시보드: {{ . }}
+      {{ end }}{{ with .PanelURL }}패널: {{ . }}
+      {{ end }}{{ with .SilenceURL }}Silence: {{ . }}
       {{ end }}
       {{ end }}
+      {{- else }}
+      현재 firing 알람 없음
+      {{- end }}
+
       🔗 Grafana 확인:
         {{ .ExternalURL }}
+      {{- end }}

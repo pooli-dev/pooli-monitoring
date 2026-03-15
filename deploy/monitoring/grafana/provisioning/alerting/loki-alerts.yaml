@@ -13,25 +13,25 @@ groups:
         for: 1m   # 1분 동안 조건 유지되면 알람
 
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
 
         data:
           - refId: A
-            datasourceUid: loki-ds   # Loki datasource UID (Grafana datasource 설정에서 확인 가능)
+            datasourceUid: loki-ds
             relativeTimeRange:
               from: 120
               to: 0
             model:
               expr: |
-                 count_over_time(
-                 {job=~"pooli-be|traffic-generator"}
-                  | json
-                  | level=~"(?i)error|FATAL|WARN"
-                  [1m]
-                 )
-                
-                
-                #count_over_time({job=~"system|monitoring"} |= "ERROR" [1m])
+                sum by (host, service) (
+                  count_over_time(
+                    {job=~"pooli-be|traffic-generator"}
+                    | json
+                    | __error__=""
+                    | level=~"(?i)error|fatal|warn"
+                    [1m]
+                  )
+                )
               queryType: instant
               refId: A
 
@@ -54,16 +54,7 @@ groups:
 
         annotations:
           summary: "ERROR log detected"
-          description: |
-            {{ if gt (len .Value) 0 }}
-            최근 {{ len .Value }}건 오류:
-            {{- range $i, $v := .Value }}
-              - {{ $v }}
-            {{- end }}
-            {{ else }}
-            오류 없음
-            {{ end }}
-          errorCode: "{{ .Labels.errorCode }}"
+          description: '최근 1분 ERROR/WARN 로그 수: {{ printf "%.0f" $values.A.Value }}'
 
         labels:
           severity: critical
