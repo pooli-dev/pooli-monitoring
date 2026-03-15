@@ -1,0 +1,82 @@
+{
+  "uid": "traffic-generator-dashboard",
+  "title": "Traffic Generator Monitoring",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Stream Length",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "traffic_stream_length",
+          "legendFormat": "stream length",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Pending Messages",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "traffic_stream_pending_message",
+          "legendFormat": "pending",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Request TPS",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "traffic_stream_requests_tps",
+          "legendFormat": "TPS",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "DLQ Total",
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "increase(traffic_dlq_total[5m])",
+          "legendFormat": "DLQ",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Oldest Pending Idle Seconds",
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "traffic_stream_oldest_pending_idle_seconds",
+          "legendFormat": "idle",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Refill Attempts",
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "increase(traffic_refill_total[5m])",
+          "legendFormat": "refill",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

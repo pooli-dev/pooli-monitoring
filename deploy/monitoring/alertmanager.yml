@@ -1,0 +1,55 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: discord
+  group_by: ['alertname','instance']
+  group_wait: 10s
+  group_interval: 30s
+  repeat_interval: 1h
+  routes:
+    - matchers:
+        - alertname="PooliAiopsAnomaly"
+      receiver: discord-aiops
+      group_by: ['alertname', 'service']
+      group_wait: 10s
+      group_interval: 30s
+      repeat_interval: 1h
+
+receivers:
+  - name: discord
+    discord_configs:
+      - webhook_url_file: /run/secrets/discord_webhook_url
+        send_resolved: true
+        title: "{{ .CommonLabels.alertname }}"
+        message: |
+          **Alert:** {{ .CommonLabels.alertname }}
+          **Instance:** {{ .CommonLabels.instance }}
+          **Severity:** {{ .CommonLabels.severity }}
+
+          {{ range .Alerts }}
+          **Summary:** {{ .Annotations.summary }}
+          **Description:** {{ .Annotations.description }}
+          {{ end }}
+  - name: discord-aiops
+    discord_configs:
+      - webhook_url_file: /run/secrets/discord_webhook_url
+        send_resolved: true
+        title: >
+          {{ if eq .Status "resolved" }}[RESOLVED]{{ else }}[AIOps]{{ end }}
+          {{ .CommonAnnotations.summary }}
+        message: |
+          **서비스**: {{ .CommonLabels.service }}
+          **심각도**: {{ .CommonLabels.severity }}
+          **모델**: {{ .CommonLabels.model }}
+          **상태**: {{ .Status }}
+
+          {{ range .Alerts }}
+          **설명**
+          {{ .Annotations.description }}
+
+          {{ if .Annotations.top_features }}
+          **주요 지표**
+          {{ .Annotations.top_features }}
+          {{ end }}
+          {{ end }}

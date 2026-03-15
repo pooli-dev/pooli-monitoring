@@ -1,0 +1,13 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: discord-webhook
+    receivers:
+      - uid: discord-webhook-uid
+        type: discord
+        settings:
+          url: $DISCORD_WEBHOOK_URL
+          grafana_url: $GF_SERVER_ROOT_URL
+          title: '{{ template "discord.custom.title" . }}'
+          message: '{{ template "discord.custom.message" . }}'
