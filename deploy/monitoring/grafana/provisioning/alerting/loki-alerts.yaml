@@ -10,7 +10,7 @@ groups:
       - uid: loki_error_alert
         title: Loki ERROR detected
         condition: C
-        for: 1m   # 1분 동안 조건 유지되면 알람
+        for: 30  # 1분 동안 조건 유지되면 알람
 
         noDataState: OK
         execErrState: Alerting
@@ -43,7 +43,7 @@ groups:
               conditions:
                 - evaluator:
                     params:
-                      - 0
+                      - 5
                     type: gt   # 0보다 크면 alert
                   operator:
                     type: and
