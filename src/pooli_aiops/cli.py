@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .baseline import load_baseline_rules, run_baseline_detection
 from .config import load_settings
 from .contracts import load_contract
 from .detector import run_detection
@@ -93,6 +94,29 @@ def build_parser() -> argparse.ArgumentParser:
         help="Skip sending alerts even if anomaly is detected",
     )
 
+    baseline_parser = subparsers.add_parser(
+        "baseline-detect",
+        help="Detect baseline anomalies from infrastructure metrics",
+    )
+    baseline_parser.add_argument(
+        "--settings",
+        type=Path,
+        required=True,
+        help="Path to settings YAML",
+    )
+    baseline_parser.add_argument(
+        "--rules",
+        type=Path,
+        required=True,
+        help="Path to baseline rule YAML",
+    )
+    baseline_parser.add_argument("--time", help="UTC detection time in ISO-8601 format")
+    baseline_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Skip sending alerts even if anomaly is detected",
+    )
+
     generate_parser = subparsers.add_parser(
         "generate-dataset",
         help="Generate synthetic datasets for classification, anomaly detection, and forecasting",
@@ -173,6 +197,15 @@ def main(argv: list[str] | None = None) -> int:
             row_filter_column=args.row_filter_column,
             row_filter_value=args.row_filter_value,
             application=args.application,
+        )
+    elif args.command == "baseline-detect":
+        settings = load_settings(args.settings)
+        rules = load_baseline_rules(args.rules)
+        result = run_baseline_detection(
+            settings=settings,
+            rules=rules,
+            dry_run=args.dry_run,
+            timestamp=_parse_datetime(args.time),
         )
     else:
         settings = load_settings(args.settings)

@@ -1,0 +1,111 @@
+﻿version: 1
+application: pooli-infra
+
+defaults:
+  history_hours: 24
+  step_seconds: 60
+  evaluation_points: 5
+  required_breaches: 3
+  min_baseline_points: 60
+  mad_epsilon: 0.000001
+
+metrics:
+  - key: cpu_usage_ratio
+    description: Host CPU usage ratio by instance
+    unit: ratio
+    direction: high
+    labels:
+      - instance
+    warn_z: 3.5
+    critical_z: 5.0
+    warn_value: 0.80
+    critical_value: 0.95
+    promql: |
+      1 - avg by(instance) (
+        rate(node_cpu_seconds_total{mode="idle"}[5m])
+      )
+
+  - key: memory_available_ratio
+    description: Host available memory ratio by instance
+    unit: ratio
+    direction: low
+    labels:
+      - instance
+    warn_z: 3.5
+    critical_z: 5.0
+    warn_value: 0.20
+    critical_value: 0.10
+    promql: |
+      node_memory_MemAvailable_bytes
+      /
+      clamp_min(node_memory_MemTotal_bytes, 1)
+
+  - key: cpu_iowait_ratio
+    description: Host CPU iowait ratio by instance
+    unit: ratio
+    direction: high
+    labels:
+      - instance
+    warn_z: 3.5
+    critical_z: 5.0
+    warn_value: 0.08
+    critical_value: 0.15
+    promql: |
+      avg by(instance) (
+        rate(node_cpu_seconds_total{mode="iowait"}[5m])
+      )
+
+  - key: disk_util_ratio
+    description: Max disk util ratio by instance
+    unit: ratio
+    direction: high
+    labels:
+      - instance
+    warn_z: 3.5
+    critical_z: 5.0
+    warn_value: 0.75
+    critical_value: 0.90
+    promql: |
+      max by(instance) (
+        rate(node_disk_io_time_seconds_total{device!~"loop.*|ram.*"}[5m])
+      )
+
+  - key: disk_read_latency_ms
+    description: Max disk read latency in milliseconds by instance
+    unit: ms
+    direction: high
+    labels:
+      - instance
+    warn_z: 3.5
+    critical_z: 5.0
+    warn_value: 20
+    critical_value: 50
+    promql: |
+      1000 * max by(instance) (
+        rate(node_disk_read_time_seconds_total{device!~"loop.*|ram.*"}[5m])
+        /
+        clamp_min(
+          rate(node_disk_reads_completed_total{device!~"loop.*|ram.*"}[5m]),
+          0.001
+        )
+      )
+
+  - key: disk_write_latency_ms
+    description: Max disk write latency in milliseconds by instance
+    unit: ms
+    direction: high
+    labels:
+      - instance
+    warn_z: 3.5
+    critical_z: 5.0
+    warn_value: 20
+    critical_value: 50
+    promql: |
+      1000 * max by(instance) (
+        rate(node_disk_write_time_seconds_total{device!~"loop.*|ram.*"}[5m])
+        /
+        clamp_min(
+          rate(node_disk_writes_completed_total{device!~"loop.*|ram.*"}[5m]),
+          0.001
+        )
+      )
