@@ -5,7 +5,7 @@ defaults:
   history_hours: 24
   step_seconds: 60
   evaluation_points: 5
-  required_breaches: 3
+  required_breaches: 2
   min_baseline_points: 60
   mad_epsilon: 0.000001
 
@@ -16,10 +16,10 @@ metrics:
     direction: high
     labels:
       - instance
-    warn_z: 3.5
-    critical_z: 5.0
-    warn_value: 0.80
-    critical_value: 0.95
+    warn_z: 3.0
+    critical_z: 4.5
+    warn_value: 0.25
+    critical_value: 0.60
     promql: |
       1 - avg by(instance) (
         rate(node_cpu_seconds_total{mode="idle"}[5m])
@@ -31,10 +31,10 @@ metrics:
     direction: low
     labels:
       - instance
-    warn_z: 3.5
-    critical_z: 5.0
-    warn_value: 0.20
-    critical_value: 0.10
+    warn_z: 3.0
+    critical_z: 4.5
+    warn_value: 0.25
+    critical_value: 0.15
     promql: |
       node_memory_MemAvailable_bytes
       /
@@ -46,10 +46,10 @@ metrics:
     direction: high
     labels:
       - instance
-    warn_z: 3.5
-    critical_z: 5.0
-    warn_value: 0.08
-    critical_value: 0.15
+    warn_z: 2.5
+    critical_z: 4.0
+    warn_value: 0.03
+    critical_value: 0.08
     promql: |
       avg by(instance) (
         rate(node_cpu_seconds_total{mode="iowait"}[5m])
@@ -61,10 +61,10 @@ metrics:
     direction: high
     labels:
       - instance
-    warn_z: 3.5
-    critical_z: 5.0
-    warn_value: 0.75
-    critical_value: 0.90
+    warn_z: 3.0
+    critical_z: 4.5
+    warn_value: 0.50
+    critical_value: 0.80
     promql: |
       max by(instance) (
         rate(node_disk_io_time_seconds_total{device!~"loop.*|ram.*"}[5m])
@@ -76,10 +76,10 @@ metrics:
     direction: high
     labels:
       - instance
-    warn_z: 3.5
-    critical_z: 5.0
-    warn_value: 20
-    critical_value: 50
+    warn_z: 2.5
+    critical_z: 4.0
+    warn_value: 10
+    critical_value: 25
     promql: |
       1000 * max by(instance) (
         rate(node_disk_read_time_seconds_total{device!~"loop.*|ram.*"}[5m])
@@ -96,10 +96,10 @@ metrics:
     direction: high
     labels:
       - instance
-    warn_z: 3.5
-    critical_z: 5.0
-    warn_value: 20
-    critical_value: 50
+    warn_z: 2.5
+    critical_z: 4.0
+    warn_value: 10
+    critical_value: 25
     promql: |
       1000 * max by(instance) (
         rate(node_disk_write_time_seconds_total{device!~"loop.*|ram.*"}[5m])
