@@ -4,7 +4,7 @@ application: pooli-infra
 defaults:
   history_hours: 24
   step_seconds: 60
-  evaluation_points: 5
+  evaluation_points: 3
   required_breaches: 2
   min_baseline_points: 60
   mad_epsilon: 0.000001
@@ -16,13 +16,31 @@ metrics:
     direction: high
     labels:
       - instance
-    warn_z: 3.0
-    critical_z: 4.5
-    warn_value: 0.25
-    critical_value: 0.60
+    warn_z: 2.5
+    critical_z: 4.0
+    warn_value: 0.20
+    critical_value: 0.55
     promql: |
       1 - avg by(instance) (
-        rate(node_cpu_seconds_total{mode="idle"}[5m])
+        rate(node_cpu_seconds_total{mode="idle"}[1m])
+      )
+
+  - key: load1_per_cpu
+    description: 1-minute load average normalized by CPU core count
+    unit: ratio
+    direction: high
+    labels:
+      - instance
+    warn_z: 2.0
+    critical_z: 3.5
+    warn_value: 0.80
+    critical_value: 1.20
+    promql: |
+      node_load1
+      /
+      clamp_min(
+        count by(instance) (node_cpu_seconds_total{mode="idle"}),
+        1
       )
 
   - key: memory_available_ratio
