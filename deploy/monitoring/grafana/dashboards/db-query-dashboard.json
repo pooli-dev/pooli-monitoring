@@ -1,0 +1,232 @@
+{
+  "uid": "db-query-dashboard",
+  "title": "DB Query Performance",
+  "tags": ["pooli-be", "mybatis", "database", "prometheus"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "mapper",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+        "query": "label_values(mybatis_query_duration_seconds_count{application=\"pooli-be\"}, mapper)",
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2
+      },
+      {
+        "name": "operation",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+        "query": "label_values(mybatis_query_duration_seconds_count{application=\"pooli-be\", mapper=~\"$mapper\"}, operation)",
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Query RPS",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(rate(mybatis_query_duration_seconds_count{application=\"pooli-be\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"]}
+      },
+      "fieldConfig": {
+        "defaults": {"unit": "reqps"}
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Overall Query P95",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(mybatis_query_duration_seconds_bucket{application=\"pooli-be\"}[5m])) by (le))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 0.1},
+              {"color": "red", "value": 0.5}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Overall Query P99",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(mybatis_query_duration_seconds_bucket{application=\"pooli-be\"}[5m])) by (le))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 0.3},
+              {"color": "red", "value": 1}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Active Mappers",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0},
+      "targets": [
+        {
+          "expr": "count(count by (mapper) (mybatis_query_duration_seconds_count{application=\"pooli-be\"}))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"]}
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Query Latency P95 by Mapper",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 5},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (mapper, le) (rate(mybatis_query_duration_seconds_bucket{application=\"pooli-be\", mapper=~\"$mapper\"}[5m])))",
+          "legendFormat": "{{mapper}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "s"}
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Query Latency P95 by Operation",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 5},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (mapper, operation, le) (rate(mybatis_query_duration_seconds_bucket{application=\"pooli-be\", mapper=~\"$mapper\", operation=~\"$operation\"}[5m])))",
+          "legendFormat": "{{mapper}}.{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "s"}
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Query RPS by Mapper",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 13},
+      "targets": [
+        {
+          "expr": "sum by (mapper) (rate(mybatis_query_duration_seconds_count{application=\"pooli-be\", mapper=~\"$mapper\"}[5m]))",
+          "legendFormat": "{{mapper}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "reqps"}
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Query RPS by Operation",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 13},
+      "targets": [
+        {
+          "expr": "sum by (mapper, operation) (rate(mybatis_query_duration_seconds_count{application=\"pooli-be\", mapper=~\"$mapper\", operation=~\"$operation\"}[5m]))",
+          "legendFormat": "{{mapper}}.{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "reqps"}
+      }
+    },
+    {
+      "id": 9,
+      "type": "bargauge",
+      "title": "Top 10 Slowest Queries (P95)",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 21},
+      "targets": [
+        {
+          "expr": "topk(10, histogram_quantile(0.95, sum by (mapper, operation, le) (rate(mybatis_query_duration_seconds_bucket{application=\"pooli-be\"}[5m]))))",
+          "legendFormat": "{{mapper}}.{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "s"}
+      }
+    },
+    {
+      "id": 10,
+      "type": "bargauge",
+      "title": "Top 10 Most Called Queries",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 21},
+      "targets": [
+        {
+          "expr": "topk(10, sum by (mapper, operation) (rate(mybatis_query_duration_seconds_count{application=\"pooli-be\"}[5m])))",
+          "legendFormat": "{{mapper}}.{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "reqps"}
+      }
+    }
+  ]
+}

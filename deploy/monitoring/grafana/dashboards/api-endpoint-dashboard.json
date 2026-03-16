@@ -1,0 +1,232 @@
+{
+  "uid": "api-endpoint-dashboard",
+  "title": "API Endpoint Overview",
+  "tags": ["pooli-be", "api", "prometheus"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+        "query": "label_values(http_server_requests_seconds_count{application=\"pooli-be\"}, instance)",
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2
+      },
+      {
+        "name": "uri",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+        "query": "label_values(http_server_requests_seconds_count{application=\"pooli-be\", instance=~\"$instance\"}, uri)",
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total RPS",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"pooli-be\", instance=~\"$instance\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"]}
+      },
+      "fieldConfig": {
+        "defaults": {"unit": "reqps"}
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Error Rate (%)",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"pooli-be\", instance=~\"$instance\", status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"pooli-be\", instance=~\"$instance\"}[5m])) * 100",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1},
+              {"color": "red", "value": 5}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Overall Latency P95",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"pooli-be\", instance=~\"$instance\"}[5m])) by (le))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 0.5},
+              {"color": "red", "value": 1}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Active Endpoints",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0},
+      "targets": [
+        {
+          "expr": "count(count by (uri) (http_server_requests_seconds_count{application=\"pooli-be\", instance=~\"$instance\"}))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"]}
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "RPS by Endpoint",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 5},
+      "targets": [
+        {
+          "expr": "sum by (uri, method) (rate(http_server_requests_seconds_count{application=\"pooli-be\", instance=~\"$instance\", uri=~\"$uri\"}[5m]))",
+          "legendFormat": "{{method}} {{uri}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "reqps"}
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Latency P95 by Endpoint",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 5},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (uri, method, le) (rate(http_server_requests_seconds_bucket{application=\"pooli-be\", instance=~\"$instance\", uri=~\"$uri\"}[5m])))",
+          "legendFormat": "{{method}} {{uri}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "s"}
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Error Rate (%) by Endpoint",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 13},
+      "targets": [
+        {
+          "expr": "(sum by (uri, method) (rate(http_server_requests_seconds_count{application=\"pooli-be\", instance=~\"$instance\", uri=~\"$uri\", status=~\"5..\"}[5m])) / sum by (uri, method) (rate(http_server_requests_seconds_count{application=\"pooli-be\", instance=~\"$instance\", uri=~\"$uri\"}[5m]))) * 100",
+          "legendFormat": "{{method}} {{uri}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "percent"}
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Status Code Distribution",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 13},
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(http_server_requests_seconds_count{application=\"pooli-be\", instance=~\"$instance\", uri=~\"$uri\"}[5m]))",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "reqps"}
+      }
+    },
+    {
+      "id": 9,
+      "type": "bargauge",
+      "title": "Top 10 Slowest Endpoints (P95)",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 21},
+      "targets": [
+        {
+          "expr": "topk(10, histogram_quantile(0.95, sum by (uri, le) (rate(http_server_requests_seconds_bucket{application=\"pooli-be\", instance=~\"$instance\"}[5m]))))",
+          "legendFormat": "{{uri}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "s"}
+      }
+    },
+    {
+      "id": 10,
+      "type": "bargauge",
+      "title": "Top 10 Most Requested Endpoints",
+      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 21},
+      "targets": [
+        {
+          "expr": "topk(10, sum by (uri) (rate(http_server_requests_seconds_count{application=\"pooli-be\", instance=~\"$instance\"}[5m])))",
+          "legendFormat": "{{uri}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "reqps"}
+      }
+    }
+  ]
+}

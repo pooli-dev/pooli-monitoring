@@ -28,7 +28,7 @@ groups:
                     {job=~"pooli-be|traffic-generator"}
                     | json
                     | __error__=""
-                    | level=~"(?i)error|fatal|warn"
+                    | level=~"(?i)error|fatal"
                     [1m]
                   )
                 )
@@ -54,7 +54,60 @@ groups:
 
         annotations:
           summary: "ERROR log detected"
-          description: '최근 1분 ERROR/WARN 로그 수: {{ printf "%.0f" $values.A.Value }}'
+          description: '최근 1분 ERROR/FATAL 로그 수: {{ printf "%.0f" $values.A.Value }}'
+
+        labels:
+          severity: critical
+
+      - uid: loki_api_5xx_alert
+        title: API 5xx Error Spike
+        condition: C
+        for: 1m
+
+        noDataState: OK
+        execErrState: Alerting
+
+        data:
+          - refId: A
+            datasourceUid: loki-ds
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: |
+                sum by (apiUri) (
+                  count_over_time(
+                    {job=~"pooli-be"}
+                    | json
+                    | __error__=""
+                    | message=~"request_log.*"
+                    | status=~"5.."
+                    [5m]
+                  )
+                )
+              queryType: instant
+              refId: A
+
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    params:
+                      - 3
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: ["A"]
+                  reducer:
+                    type: last
+
+        annotations:
+          summary: "API 5xx 에러 급증"
+          description: '최근 5분간 5xx 에러 {{ printf "%.0f" $values.A.Value }}건 (endpoint: {{ $labels.apiUri }})'
 
         labels:
           severity: critical
