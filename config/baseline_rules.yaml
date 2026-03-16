@@ -39,7 +39,7 @@ metrics:
       node_load1
       /
       clamp_min(
-        count by(instance) (node_cpu_seconds_total{mode="idle"}),
+        count by(instance, job) (node_cpu_seconds_total{mode="idle"}),
         1
       )
 

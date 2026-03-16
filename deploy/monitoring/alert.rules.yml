@@ -22,7 +22,7 @@ groups:
       description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
 
   - alert: HighLoadPerCpu
-    expr: (node_load1 / clamp_min(count by(instance) (node_cpu_seconds_total{mode="idle"}), 1)) > 1.2
+    expr: (node_load1 / clamp_min(count by(instance, job) (node_cpu_seconds_total{mode="idle"}), 1)) > 1.2
     for: 2m
     labels:
       severity: warning

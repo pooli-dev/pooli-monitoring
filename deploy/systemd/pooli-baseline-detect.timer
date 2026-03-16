@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Pooli baseline anomaly detection every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=1s
+Unit=pooli-baseline-detect.service
+
+[Install]
+WantedBy=timers.target
