@@ -5,6 +5,7 @@ artifacts/*.joblib
 artifacts/*.json
 artifacts/*.csv
 !artifacts/.gitkeep
+.idea
 
 deploy/monitoring/secrets/
 deploy/monitoring/.env
