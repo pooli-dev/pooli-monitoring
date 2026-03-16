@@ -61,7 +61,17 @@
         "multi": true,
         "refresh": 2,
         "hide": 0
-      }
+      },
+      {
+        "name": "last_lua_status",
+        "type": "query",
+        "datasource": "Loki",
+        "query": "label_values({job=\"traffic-generator\"}, last_lua_status)",
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2,
+        "hide": 0
+     }
     ]
   },
   "links": [],
@@ -175,7 +185,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 10
       },
       "targets": [
         {
@@ -185,23 +195,23 @@
       ]
     },
     {
-      "id": 6,
-      "type": "timeseries",
-      "title": "Deducted Bytes / sec",
-      "datasource": "Loki",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 5
-      },
+       "id": 6,
+       "type": "stat",
+       "title": "Deducted Bytes Total (5m)",
+       "datasource": "Loki",
+       "gridPos": {
+          "h": 5,
+          "w": 6,
+          "x": 0,
+          "y": 5
+       },
       "targets": [
-        {
-          "expr": "sum(rate({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\", final_status=~\"${final_status:regex}\"} |= \"traffic_stream_record_done\" | logfmt | unwrap deducted_total_bytes [5m]))",
+      {
+          "expr": "sum(sum_over_time({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\", final_status=~\"${final_status:regex}\"} |= \"traffic_stream_record_done\" | logfmt | unwrap deducted_total_bytes [5m]))",
           "refId": "A"
-        }
-      ]
-    },
+      }
+    ]
+   },
     {
       "id": 7,
       "type": "timeseries",
@@ -294,6 +304,42 @@
       "options": {
         "showHeader": true
       }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Latency (avg ms)",
+      "datasource": "Loki",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 5
+      },
+      "targets": [
+        {
+          "expr": "avg_over_time({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\"} |= \"traffic_stream_record_done\" | logfmt | unwrap latency [5m])",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "bargauge",
+      "title": "Lua Status Count",
+      "datasource": "Loki",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "targets": [
+        {
+          "expr": "sum by (last_lua_status) (count_over_time({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\"} |= \"traffic_stream_record_done\" | logfmt [5m]))",
+          "refId": "A"
+        }
+      ]
     }
   ]
 }
