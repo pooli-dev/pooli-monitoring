@@ -77,6 +77,18 @@
           "refId": "A"
         }
       ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Process TPS",
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "traffic_generator_process_tps",
+          "legendFormat": "process tps",
+          "refId": "A"
+        }
+      ]
     }
   ]
 }
