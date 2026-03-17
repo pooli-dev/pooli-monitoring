@@ -10,114 +10,110 @@
       {
         "name": "instance",
         "type": "query",
-        "datasource": "Prometheus",
+        "datasource": "prometheus",
         "query": "label_values(node_cpu_seconds_total, instance)",
         "refresh": 1,
-        "multi": false,
-        "includeAll": false
+        "multi": true,
+        "includeAll": true
       }
     ]
   },
 
   "panels": [
-
     {
-      "type": "stat",
-      "title": "CPU Busy %",
-      "targets": [
+      "type": "row",
+      "title": "Server Overview",
+      "repeat": "instance",
+      "repeatDirection": "h",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 },
+      "panels": [
         {
-          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",instance=\"$instance\"}[1m])) * 100)"
-        }
-      ],
-      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 }
-    },
-
-    {
-      "type": "stat",
-      "title": "RAM Used %",
-      "targets": [
-        {
-          "expr": "(1 - (node_memory_MemAvailable_bytes{instance=\"$instance\"} / node_memory_MemTotal_bytes{instance=\"$instance\"})) * 100"
-        }
-      ],
-      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 }
-    },
-
-    {
-      "type": "stat",
-      "title": "Disk Used %",
-      "targets": [
-        {
-          "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",instance=\"$instance\"} / node_filesystem_size_bytes{mountpoint=\"/\",instance=\"$instance\"})) * 100"
-        }
-      ],
-      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 }
-    },
-
-    {
-      "type": "stat",
-      "title": "Uptime",
-      "targets": [
-        {
-          "expr": "time() - node_boot_time_seconds{instance=\"$instance\"}"
-        }
-      ],
-      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 }
-    },
-
-    {
-      "type": "timeseries",
-      "title": "CPU Usage",
-      "targets": [
-        {
-          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",instance=\"$instance\"}[1m])) * 100)"
-        }
-      ],
-      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 }
-    },
-
-    {
-      "type": "timeseries",
-      "title": "Memory Usage",
-      "targets": [
-        {
-          "expr": "(1 - (node_memory_MemAvailable_bytes{instance=\"$instance\"} / node_memory_MemTotal_bytes{instance=\"$instance\"})) * 100"
-        }
-      ],
-      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 }
-    },
-
-    {
-      "type": "timeseries",
-      "title": "Network Traffic",
-      "targets": [
-        {
-          "expr": "rate(node_network_receive_bytes_total{instance=\"$instance\"}[1m])",
-          "legendFormat": "RX"
+          "type": "stat",
+          "title": "CPU Busy %",
+          "targets": [
+            {
+              "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",instance=\"$instance\"}[1m])) * 100)"
+            }
+          ],
+          "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+          "fieldConfig": { "defaults": { "unit": "percent" } }
         },
         {
-          "expr": "rate(node_network_transmit_bytes_total{instance=\"$instance\"}[1m])",
-          "legendFormat": "TX"
-        }
-      ],
-      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 }
-    },
-
-    {
-      "type": "timeseries",
-      "title": "Disk IO",
-      "targets": [
-        {
-          "expr": "rate(node_disk_read_bytes_total{instance=\"$instance\"}[1m])",
-          "legendFormat": "Read"
+          "type": "stat",
+          "title": "RAM Used %",
+          "targets": [
+            {
+              "expr": "(1 - (node_memory_MemAvailable_bytes{instance=\"$instance\"} / node_memory_MemTotal_bytes{instance=\"$instance\"})) * 100"
+            }
+          ],
+          "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+          "fieldConfig": { "defaults": { "unit": "percent" } }
         },
         {
-          "expr": "rate(node_disk_written_bytes_total{instance=\"$instance\"}[1m])",
-          "legendFormat": "Write"
+          "type": "stat",
+          "title": "Disk Used %",
+          "targets": [
+            {
+              "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",instance=\"$instance\"} / node_filesystem_size_bytes{mountpoint=\"/\",instance=\"$instance\"})) * 100"
+            }
+          ],
+          "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+          "fieldConfig": { "defaults": { "unit": "percent" } }
+        },
+        {
+          "type": "stat",
+          "title": "Uptime",
+          "targets": [
+            {
+              "expr": "time() - node_boot_time_seconds{instance=\"$instance\"}"
+            }
+          ],
+          "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+          "fieldConfig": { "defaults": { "unit": "d" } }
+        },
+        {
+          "type": "timeseries",
+          "title": "CPU Usage",
+          "targets": [
+            {
+              "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",instance=\"$instance\"}[1m])) * 100)"
+            }
+          ],
+          "gridPos": { "x": 0, "y": 4, "w": 12, "h": 6 },
+          "datasource": "prometheus"
+        },
+        {
+          "type": "timeseries",
+          "title": "Memory Usage",
+          "targets": [
+            {
+              "expr": "(1 - (node_memory_MemAvailable_bytes{instance=\"$instance\"} / node_memory_MemTotal_bytes{instance=\"$instance\"})) * 100"
+            }
+          ],
+          "gridPos": { "x": 12, "y": 4, "w": 12, "h": 6 },
+          "datasource": "prometheus"
+        },
+        {
+          "type": "timeseries",
+          "title": "Network Traffic",
+          "targets": [
+            { "expr": "rate(node_network_receive_bytes_total{instance=\"$instance\"}[1m])", "legendFormat": "RX" },
+            { "expr": "rate(node_network_transmit_bytes_total{instance=\"$instance\"}[1m])", "legendFormat": "TX" }
+          ],
+          "gridPos": { "x": 0, "y": 10, "w": 12, "h": 6 },
+          "datasource": "prometheus"
+        },
+        {
+          "type": "timeseries",
+          "title": "Disk IO",
+          "targets": [
+            { "expr": "rate(node_disk_read_bytes_total{instance=\"$instance\"}[1m])", "legendFormat": "Read" },
+            { "expr": "rate(node_disk_written_bytes_total{instance=\"$instance\"}[1m])", "legendFormat": "Write" }
+          ],
+          "gridPos": { "x": 12, "y": 10, "w": 12, "h": 6 },
+          "datasource": "prometheus"
         }
-      ],
-      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 }
+      ]
     }
-
   ]
 }
