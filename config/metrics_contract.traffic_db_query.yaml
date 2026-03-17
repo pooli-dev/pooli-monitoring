@@ -1,0 +1,265 @@
+version: 1
+application: pooli-be
+
+metrics:
+  - key: traffic_db_query_rate_total
+    description: Total MyBatis query executions per second in the traffic deduction pipeline
+    required: true
+    unit: rps
+    aggregation: service
+    window: 5m
+    promql: |
+      sum(
+        rate(mybatis_query_duration_seconds_count{application="pooli-be"}[5m])
+      ) or vector(0)
+
+  - key: traffic_db_query_latency_p95_total
+    description: Service-level p95 MyBatis query latency in the traffic deduction pipeline
+    required: true
+    unit: seconds
+    aggregation: service
+    window: 5m
+    promql: |
+      histogram_quantile(
+        0.95,
+        sum by (le) (
+          rate(mybatis_query_duration_seconds_bucket{application="pooli-be"}[5m])
+        )
+      ) or vector(0)
+
+  - key: refill_deduct_individual_rate
+    description: TrafficRefillSourceMapper.deductIndividualRemaining query rate
+    required: false
+    unit: rps
+    aggregation: operation
+    window: 5m
+    promql: |
+      sum(
+        rate(
+          mybatis_query_duration_seconds_count{
+            application="pooli-be",
+            mapper="TrafficRefillSourceMapper",
+            operation="deductIndividualRemaining"
+          }[5m]
+        )
+      ) or vector(0)
+
+  - key: refill_deduct_individual_p95
+    description: TrafficRefillSourceMapper.deductIndividualRemaining p95 latency
+    required: false
+    unit: seconds
+    aggregation: operation
+    window: 5m
+    promql: |
+      histogram_quantile(
+        0.95,
+        sum by (le) (
+          rate(
+            mybatis_query_duration_seconds_bucket{
+              application="pooli-be",
+              mapper="TrafficRefillSourceMapper",
+              operation="deductIndividualRemaining"
+            }[5m]
+          )
+        )
+      ) or vector(0)
+
+  - key: refill_deduct_shared_rate
+    description: TrafficRefillSourceMapper.deductSharedRemaining query rate
+    required: false
+    unit: rps
+    aggregation: operation
+    window: 5m
+    promql: |
+      sum(
+        rate(
+          mybatis_query_duration_seconds_count{
+            application="pooli-be",
+            mapper="TrafficRefillSourceMapper",
+            operation="deductSharedRemaining"
+          }[5m]
+        )
+      ) or vector(0)
+
+  - key: refill_deduct_shared_p95
+    description: TrafficRefillSourceMapper.deductSharedRemaining p95 latency
+    required: false
+    unit: seconds
+    aggregation: operation
+    window: 5m
+    promql: |
+      histogram_quantile(
+        0.95,
+        sum by (le) (
+          rate(
+            mybatis_query_duration_seconds_bucket{
+              application="pooli-be",
+              mapper="TrafficRefillSourceMapper",
+              operation="deductSharedRemaining"
+            }[5m]
+          )
+        )
+      ) or vector(0)
+
+  - key: refill_select_individual_for_update_rate
+    description: TrafficRefillSourceMapper.selectIndividualRemainingForUpdate query rate
+    required: false
+    unit: rps
+    aggregation: operation
+    window: 5m
+    promql: |
+      sum(
+        rate(
+          mybatis_query_duration_seconds_count{
+            application="pooli-be",
+            mapper="TrafficRefillSourceMapper",
+            operation="selectIndividualRemainingForUpdate"
+          }[5m]
+        )
+      ) or vector(0)
+
+  - key: refill_select_individual_for_update_p95
+    description: TrafficRefillSourceMapper.selectIndividualRemainingForUpdate p95 latency
+    required: false
+    unit: seconds
+    aggregation: operation
+    window: 5m
+    promql: |
+      histogram_quantile(
+        0.95,
+        sum by (le) (
+          rate(
+            mybatis_query_duration_seconds_bucket{
+              application="pooli-be",
+              mapper="TrafficRefillSourceMapper",
+              operation="selectIndividualRemainingForUpdate"
+            }[5m]
+          )
+        )
+      ) or vector(0)
+
+  - key: refill_select_shared_for_update_rate
+    description: TrafficRefillSourceMapper.selectSharedRemainingForUpdate query rate
+    required: false
+    unit: rps
+    aggregation: operation
+    window: 5m
+    promql: |
+      sum(
+        rate(
+          mybatis_query_duration_seconds_count{
+            application="pooli-be",
+            mapper="TrafficRefillSourceMapper",
+            operation="selectSharedRemainingForUpdate"
+          }[5m]
+        )
+      ) or vector(0)
+
+  - key: refill_select_shared_for_update_p95
+    description: TrafficRefillSourceMapper.selectSharedRemainingForUpdate p95 latency
+    required: false
+    unit: seconds
+    aggregation: operation
+    window: 5m
+    promql: |
+      histogram_quantile(
+        0.95,
+        sum by (le) (
+          rate(
+            mybatis_query_duration_seconds_bucket{
+              application="pooli-be",
+              mapper="TrafficRefillSourceMapper",
+              operation="selectSharedRemainingForUpdate"
+            }[5m]
+          )
+        )
+      ) or vector(0)
+
+  - key: traffic_usage_upsert_daily_total_rate
+    description: TrafficDbUsageMapper.upsertDailyTotalUsage query rate
+    required: false
+    unit: rps
+    aggregation: operation
+    window: 5m
+    promql: |
+      sum(
+        rate(
+          mybatis_query_duration_seconds_count{
+            application="pooli-be",
+            mapper="TrafficDbUsageMapper",
+            operation="upsertDailyTotalUsage"
+          }[5m]
+        )
+      ) or vector(0)
+
+  - key: traffic_usage_upsert_daily_total_p95
+    description: TrafficDbUsageMapper.upsertDailyTotalUsage p95 latency
+    required: false
+    unit: seconds
+    aggregation: operation
+    window: 5m
+    promql: |
+      histogram_quantile(
+        0.95,
+        sum by (le) (
+          rate(
+            mybatis_query_duration_seconds_bucket{
+              application="pooli-be",
+              mapper="TrafficDbUsageMapper",
+              operation="upsertDailyTotalUsage"
+            }[5m]
+          )
+        )
+      ) or vector(0)
+
+  - key: speed_bucket_upsert_usage_rate
+    description: TrafficDbSpeedBucketMapper.upsertUsage query rate
+    required: false
+    unit: rps
+    aggregation: operation
+    window: 5m
+    promql: |
+      sum(
+        rate(
+          mybatis_query_duration_seconds_count{
+            application="pooli-be",
+            mapper="TrafficDbSpeedBucketMapper",
+            operation="upsertUsage"
+          }[5m]
+        )
+      ) or vector(0)
+
+  - key: speed_bucket_upsert_usage_p95
+    description: TrafficDbSpeedBucketMapper.upsertUsage p95 latency
+    required: false
+    unit: seconds
+    aggregation: operation
+    window: 5m
+    promql: |
+      histogram_quantile(
+        0.95,
+        sum by (le) (
+          rate(
+            mybatis_query_duration_seconds_bucket{
+              application="pooli-be",
+              mapper="TrafficDbSpeedBucketMapper",
+              operation="upsertUsage"
+            }[5m]
+          )
+        )
+      ) or vector(0)
+
+labels:
+  required:
+    - application
+  recommended:
+    - instance
+    - job
+    - mapper
+    - operation
+  forbidden:
+    - userId
+    - sessionId
+    - traceId
+    - rawPath
+    - queryString
