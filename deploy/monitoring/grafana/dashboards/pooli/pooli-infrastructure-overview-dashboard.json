@@ -21,67 +21,74 @@
     {
       "type": "stat",
       "title": "CPU Busy %",
-      "targets": [
-        {
-          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",node_name=~\"$servers\"}[1m])) * 100)"
-        }
-      ],
-      "gridPos": { "x": 0, "y": 0, "w": 3, "h": 3 },
-      "fieldConfig": { "defaults": { "unit": "percent" } },
-      "repeat": "$servers",
-      "repeatDirection": "h"
+      "targets": [{"expr":"100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",node_name=\"db-server\"}[1m])) * 100)"}],
+      "gridPos":{"x":0,"y":0,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
     },
     {
       "type": "stat",
       "title": "RAM Used %",
-      "targets": [
-        {
-          "expr": "(1 - (node_memory_MemAvailable_bytes{node_name=~\"$servers\"} / node_memory_MemTotal_bytes{node_name=~\"$servers\"})) * 100"
-        }
-      ],
-      "gridPos": { "x": 3, "y": 0, "w": 3, "h": 3 },
-      "fieldConfig": { "defaults": { "unit": "percent" } },
-      "repeat": "$servers",
-      "repeatDirection": "h"
+      "targets": [{"expr":"(1 - (node_memory_MemAvailable_bytes{node_name=\"db-server\"} / node_memory_MemTotal_bytes{node_name=\"db-server\"})) * 100"}],
+      "gridPos":{"x":4,"y":0,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
     },
     {
       "type": "stat",
       "title": "Disk Used %",
-      "targets": [
-        {
-          "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",node_name=~\"$servers\"} / node_filesystem_size_bytes{mountpoint=\"/\",node_name=~\"$servers\"})) * 100"
-        }
-      ],
-      "gridPos": { "x": 6, "y": 0, "w": 3, "h": 3 },
-      "fieldConfig": { "defaults": { "unit": "percent" } },
-      "repeat": "$servers",
-      "repeatDirection": "h"
+      "targets": [{"expr":"(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",node_name=\"db-server\"} / node_filesystem_size_bytes{mountpoint=\"/\",node_name=\"db-server\"})) * 100"}],
+      "gridPos":{"x":8,"y":0,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
     },
     {
       "type": "stat",
       "title": "Error Rate",
-      "targets": [
-        {
-          "expr": "rate(pooli_request_errors_total{node_name=~\"$servers\"}[1m])"
-        }
-      ],
-      "gridPos": { "x": 9, "y": 0, "w": 3, "h": 3 },
-      "fieldConfig": { "defaults": { "unit": "short" } },
-      "repeat": "$servers",
-      "repeatDirection": "h"
+      "targets": [{"expr":"rate(pooli_request_errors_total{node_name=\"db-server\"}[1m])"}],
+      "gridPos":{"x":12,"y":0,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"short"}}
     },
     {
       "type": "stat",
       "title": "I/O",
-      "targets": [
-        {
-          "expr": "rate(node_disk_read_bytes_total{node_name=~\"$servers\"}[1m]) + rate(node_disk_written_bytes_total{node_name=~\"$servers\"}[1m])"
-        }
-      ],
-      "gridPos": { "x": 12, "y": 0, "w": 3, "h": 3 },
-      "fieldConfig": { "defaults": { "unit": "Bps" } },
-      "repeat": "$servers",
-      "repeatDirection": "h"
+      "targets": [{"expr":"rate(node_disk_read_bytes_total{node_name=\"db-server\"}[1m]) + rate(node_disk_written_bytes_total{node_name=\"db-server\"}[1m])"}],
+      "gridPos":{"x":16,"y":0,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"Bps"}}
+    },
+
+    {
+      "type": "stat",
+      "title": "CPU Busy %",
+      "targets": [{"expr":"100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",node_name=\"api-server\"}[1m])) * 100)"}],
+      "gridPos":{"x":0,"y":4,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "RAM Used %",
+      "targets": [{"expr":"(1 - (node_memory_MemAvailable_bytes{node_name=\"api-server\"} / node_memory_MemTotal_bytes{node_name=\"api-server\"})) * 100"}],
+      "gridPos":{"x":4,"y":4,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Disk Used %",
+      "targets": [{"expr":"(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",node_name=\"api-server\"} / node_filesystem_size_bytes{mountpoint=\"/\",node_name=\"api-server\"})) * 100"}],
+      "gridPos":{"x":8,"y":4,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate",
+      "targets": [{"expr":"rate(pooli_request_errors_total{node_name=\"api-server\"}[1m])"}],
+      "gridPos":{"x":12,"y":4,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"short"}}
+    },
+    {
+      "type": "stat",
+      "title": "I/O",
+      "targets": [{"expr":"rate(node_disk_read_bytes_total{node_name=\"api-server\"}[1m]) + rate(node_disk_written_bytes_total{node_name=\"api-server\"}[1m])"}],
+      "gridPos":{"x":16,"y":4,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"Bps"}}
     }
+
   ]
 }
