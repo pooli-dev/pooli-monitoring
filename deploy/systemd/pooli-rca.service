@@ -1,0 +1,10 @@
+﻿[Unit]
+Description=Pooli RCA aggregation
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/pooli-monitoring
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/pooli-monitoring/.venv/bin/python -m pooli_aiops rca --settings config/settings.yaml

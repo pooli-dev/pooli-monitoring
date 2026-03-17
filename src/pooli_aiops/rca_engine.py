@@ -1,10 +1,9 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
-import json
 import sqlite3
-from collections import defaultdict
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from collections import Counter
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -12,13 +11,13 @@ from .alerting import AlertmanagerClient
 from .config import AppSettings
 
 
-@dataclass
+@dataclass(slots=True)
 class AnomalyEvent:
     id: int
     timestamp: datetime
     application: str
     instance: str
-    source: str  # e.g., "baseline" or "ecod"
+    source: str
     severity: str
     metric: str
     score: float
@@ -34,7 +33,8 @@ class EventStore:
 
     def _init_db(self) -> None:
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute('''
+            conn.execute(
+                '''
                 CREATE TABLE IF NOT EXISTS anomaly_events (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     timestamp TEXT NOT NULL,
@@ -47,7 +47,8 @@ class EventStore:
                     description TEXT,
                     processed BOOLEAN NOT NULL DEFAULT 0
                 )
-            ''')
+                '''
+            )
             conn.commit()
 
     def add_event(
@@ -62,35 +63,48 @@ class EventStore:
         description: str,
     ) -> None:
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute('''
-                INSERT INTO anomaly_events 
+            conn.execute(
+                '''
+                INSERT INTO anomaly_events
                 (timestamp, application, instance, source, severity, metric, score, description)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                timestamp.isoformat(), application, instance,
-                source, severity, metric, score, description
-            ))
+                ''',
+                (
+                    timestamp.isoformat(),
+                    application,
+                    instance,
+                    source,
+                    severity,
+                    metric,
+                    score,
+                    description,
+                ),
+            )
             conn.commit()
 
     def get_unprocessed_events(self) -> list[AnomalyEvent]:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
-            cursor = conn.execute('SELECT * FROM anomaly_events WHERE processed = 0 ORDER BY timestamp ASC')
-            
-            events = []
+            cursor = conn.execute(
+                'SELECT * FROM anomaly_events WHERE processed = 0 ORDER BY timestamp ASC'
+            )
+
+            events: list[AnomalyEvent] = []
             for row in cursor.fetchall():
-                events.append(AnomalyEvent(
-                    id=row['id'],
-                    timestamp=datetime.fromisoformat(row['timestamp']),
-                    application=row['application'],
-                    instance=row['instance'],
-                    source=row['source'],
-                    severity=row['severity'],
-                    metric=row['metric'],
-                    score=row['score'],
-                    description=row['description'],
-                    processed=bool(row['processed'])
-                ))
+                events.append(
+                    AnomalyEvent(
+                        id=row['id'],
+                        timestamp=datetime.fromisoformat(row['timestamp']),
+                        application=row['application'],
+                        instance=row['instance'],
+                        source=row['source'],
+                        severity=row['severity'],
+                        metric=row['metric'],
+                        score=row['score'],
+                        description=row['description'],
+                        processed=bool(row['processed']),
+                    )
+                )
             return events
 
     def mark_processed(self, event_ids: list[int]) -> None:
@@ -98,137 +112,204 @@ class EventStore:
             return
         with sqlite3.connect(self.db_path) as conn:
             placeholders = ','.join('?' * len(event_ids))
-            conn.execute(f'''
-                UPDATE anomaly_events SET processed = 1 WHERE id IN ({placeholders})
-            ''', event_ids)
+            conn.execute(
+                f'''UPDATE anomaly_events SET processed = 1 WHERE id IN ({placeholders})''',
+                event_ids,
+            )
             conn.commit()
 
 
 class RcaEngine:
     def __init__(self, settings: AppSettings):
         self.settings = settings
-        self.store = EventStore(settings.artifacts.rca_db_path)
+        self.store = EventStore(settings.rca_db_path)
         self.alert_client = AlertmanagerClient(settings.alertmanager)
-
-        # Simple topology rules: lower number means closer to the root infrastructure
-        self.topology_ranks = {
-            "OS": 1,        # CPU, Memory, Disk
-            "DB": 2,        # Database
-            "Redis": 3,     # Cache / Queue
-            "WAS": 4,       # Application Server
-            "Client": 5     # Traffic
+        self.topology_bonus = {
+            'OS': 2.0,
+            'DB': 1.5,
+            'Redis': 1.0,
+            'WAS': 0.5,
+            'Client': 0.0,
         }
-    
+
     def _determine_component_type(self, application: str, metric: str) -> str:
-        # Heuristic mapping
-        if "cpu" in metric.lower() or "disk" in metric.lower() or "memory" in metric.lower():
-            return "OS"
-        if application.lower() == "db" or "db_" in metric.lower():
-            return "DB"
-        if application.lower() == "redis" or "stream" in metric.lower():
-            return "Redis"
-        return "WAS"
+        metric_lower = (metric or '').lower()
+        application_lower = application.lower()
+
+        if any(keyword in metric_lower for keyword in ('cpu', 'disk', 'memory', 'load', 'iowait', 'filesystem')):
+            return 'OS'
+        if application_lower in {'db', 'mysql', 'mariadb'} or any(
+            keyword in metric_lower
+            for keyword in ('db_', 'mybatis', 'query', 'mysql', 'innodb', 'sql', 'connection')
+        ):
+            return 'DB'
+        if application_lower == 'redis' or any(
+            keyword in metric_lower
+            for keyword in ('redis', 'stream', 'pending', 'enqueue', 'queue', 'consumer', 'lag')
+        ):
+            return 'Redis'
+        if application_lower == 'client' or 'traffic' in metric_lower:
+            return 'Client'
+        return 'WAS'
+
+    @staticmethod
+    def _severity_weight(severity: str) -> float:
+        return {
+            'critical': 30.0,
+            'warning': 10.0,
+            'info': 2.0,
+        }.get(severity.lower(), 0.0)
+
+    def _event_rca_score(
+        self,
+        event: AnomalyEvent,
+        component_type: str,
+        component_counts: Counter[str],
+        application_counts: Counter[str],
+    ) -> float:
+        score_magnitude = min(abs(float(event.score)), 100.0)
+        component_support = max(component_counts[component_type] - 1, 0)
+        application_support = max(application_counts[event.application] - 1, 0)
+        return (
+            score_magnitude * 10.0
+            + self._severity_weight(event.severity)
+            + component_support * 8.0
+            + application_support * 4.0
+            + self.topology_bonus.get(component_type, 0.0)
+        )
+
+    @staticmethod
+    def _group_events(
+        events: list[AnomalyEvent],
+        time_window: timedelta,
+    ) -> list[list[AnomalyEvent]]:
+        if not events:
+            return []
+
+        groups: list[list[AnomalyEvent]] = [[events[0]]]
+        for event in events[1:]:
+            previous_event = groups[-1][-1]
+            if event.timestamp - previous_event.timestamp <= time_window:
+                groups[-1].append(event)
+            else:
+                groups.append([event])
+        return groups
+
+    @staticmethod
+    def _format_timestamp(value: datetime) -> str:
+        return value.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')
+
+    def _build_description(
+        self,
+        group: list[AnomalyEvent],
+        scored_events: list[tuple[float, AnomalyEvent, str]],
+        root_event: AnomalyEvent,
+        root_component: str,
+        component_counts: Counter[str],
+    ) -> str:
+        impacted_apps = sorted({event.application for event in group})
+        window_start = self._format_timestamp(group[0].timestamp)
+        window_end = self._format_timestamp(group[-1].timestamp)
+        root_score = abs(float(root_event.score))
+
+        lines = [
+            f'추정 RCA 결과: {root_component} 계층 이상이 가장 유력합니다.',
+            '',
+            f'분석 구간: {window_start} ~ {window_end}',
+            f'영향 범위: {", ".join(impacted_apps)}',
+            f'유력 후보: {root_event.application} ({root_event.instance})',
+            f'메트릭: {root_event.metric}',
+            f'탐지 소스: {root_event.source}',
+            f'이상 점수 크기: {root_score:.2f}',
+            '',
+            '판단 근거:',
+            f'- 동일 시간 구간에 연관 이벤트 {len(group)}건이 함께 감지되었습니다.',
+            f'- {root_component} 계층 이벤트가 {component_counts[root_component]}건으로 가장 많이 관측되었습니다.',
+            f'- 대표 이벤트 설명: {root_event.description}',
+            '',
+            '같이 관측된 이벤트:',
+        ]
+
+        for index, (rca_score, event, component_type) in enumerate(scored_events, start=1):
+            lines.append(
+                f'{index}. [{component_type}] {event.application}/{event.instance} - {event.metric} '
+                f'(source={event.source}, severity={event.severity}, score={abs(float(event.score)):.2f}, rca_score={rca_score:.1f})'
+            )
+
+        lines.extend(
+            [
+                '',
+                '이 결과는 추정 RCA이며, DB slow query / lock / EXPLAIN 같은 추가 증거가 있으면 확정 RCA로 승격할 수 있습니다.',
+            ]
+        )
+        return '\n'.join(lines)
 
     def run_rca(self, dry_run: bool = False, time_window_minutes: int = 5) -> dict[str, Any]:
-        """Group unprocessed events, determine root cause, and send aggregated alert."""
+        if time_window_minutes <= 0:
+            raise ValueError('time_window_minutes must be positive')
+
         events = self.store.get_unprocessed_events()
         if not events:
-            return {"status": "no_events", "processed_count": 0}
+            return {'status': 'no_events', 'processed_count': 0}
 
-        # Group by time window using a simple greedy approach
-        event_groups: list[list[AnomalyEvent]] = []
-        
-        current_group = []
-        group_start = None
-
-        for event in events:
-            if group_start is None:
-                group_start = event.timestamp
-                current_group.append(event)
-            else:
-                if event.timestamp - group_start <= timedelta(minutes=time_window_minutes):
-                    current_group.append(event)
-                else:
-                    event_groups.append(current_group)
-                    current_group = [event]
-                    group_start = event.timestamp
-        if current_group:
-            event_groups.append(current_group)
-
-        
-        processed_ids = []
+        event_groups = self._group_events(events, timedelta(minutes=time_window_minutes))
+        processed_ids: list[int] = []
         alerts_sent = 0
+        skipped_singletons = 0
 
         for group in event_groups:
-            processed_ids.extend([e.id for e in group])
-            if len(group) == 0:
-                continue
-                
-            # If only one event, just send it directly (skip RCA)
-            if len(group) == 1:
-                e = group[0]
-                if not dry_run:
-                    self.alert_client.send_anomaly(
-                        labels={
-                            "service": e.application,
-                            "severity": e.severity,
-                            "detector": e.source,
-                            "metric": e.metric,
-                            "instance": e.instance
-                        },
-                        annotations={
-                            "summary": f"[{e.severity}] {e.application} 이상 탐지 ({e.metric})",
-                            "description": e.description
-                        }
-                    )
-                alerts_sent += 1
+            group_ids = [event.id for event in group]
+            processed_ids.extend(group_ids)
+
+            if len(group) <= 1:
+                skipped_singletons += 1
                 continue
 
-            # Perform RCA scoring for the group
-            scored_events = []
-            for e in group:
-                comp_type = self._determine_component_type(e.application, e.metric)
-                rank = self.topology_ranks.get(comp_type, 100)
-                
-                # Rule: lower rank (closer to OS/DB) gets higher root cause score.
-                # Adding the raw anomaly score as a tie-breaker.
-                # Score = (100 - rank) * 1000 + anomaly_score
-                rca_score = (100 - rank) * 1000 + e.score
-                scored_events.append((rca_score, e, comp_type))
-            
-            # Sort by RCA score descending
-            scored_events.sort(key=lambda x: x[0], reverse=True)
-            root_cause_tuple = scored_events[0]
-            root_event = root_cause_tuple[1]
-            root_comp_type = root_cause_tuple[2]
+            component_types = {
+                event.id: self._determine_component_type(event.application, event.metric)
+                for event in group
+            }
+            component_counts: Counter[str] = Counter(component_types.values())
+            application_counts: Counter[str] = Counter(event.application for event in group)
 
-            # Format the RCA Alert
-            impacted_apps = set([e.application for e in group])
-            
-            description = (
-                f"🚨 RCA 분석 결과: {root_comp_type} 병목/장애 의심\n\n"
-                f"📌 가장 유력한 Root Cause: {root_event.application} ({root_event.instance})\n"
-                f"- 핵심 지표: {root_event.metric}\n"
-                f"- 상세 내용: {root_event.description}\n\n"
-                f"🔍 동시간대 연관 경보 ({len(group)}건):\n"
+            scored_events: list[tuple[float, AnomalyEvent, str]] = []
+            for event in group:
+                component_type = component_types[event.id]
+                rca_score = self._event_rca_score(
+                    event=event,
+                    component_type=component_type,
+                    component_counts=component_counts,
+                    application_counts=application_counts,
+                )
+                scored_events.append((rca_score, event, component_type))
+
+            scored_events.sort(key=lambda item: item[0], reverse=True)
+            _, root_event, root_component = scored_events[0]
+            impacted_apps = sorted({event.application for event in group})
+            severity = 'critical' if any(event.severity == 'critical' for event in group) else 'warning'
+            description = self._build_description(
+                group=group,
+                scored_events=scored_events,
+                root_event=root_event,
+                root_component=root_component,
+                component_counts=component_counts,
             )
-            
-            for i, (_, e, c_type) in enumerate(scored_events):
-                description += f"  {i+1}. [{c_type}] {e.application} - {e.metric} (탐지: {e.source})\n"
 
             if not dry_run:
                 self.alert_client.send_anomaly(
                     labels={
-                        "service": "rca-engine",
-                        "severity": "critical" if any(e.severity == "critical" for e in group) else "warning",
-                        "detector": "rca",
-                        "root_cause_app": root_event.application,
-                        "impacted_apps": ",".join(impacted_apps)
+                        'service': 'rca-engine',
+                        'severity': severity,
+                        'detector': 'rca',
+                        'rca_state': 'suspected',
+                        'root_cause_app': root_event.application,
+                        'root_cause_component': root_component,
+                        'impacted_apps': ','.join(impacted_apps),
                     },
                     annotations={
-                        "summary": f"[RCA] 서버 연쇄 이상 탐지 (의심: {root_comp_type} 병목)",
-                        "description": description
-                    }
+                        'summary': f'[AIOps][suspected] 연관 이상 징후 감지 (유력 후보: {root_event.application}/{root_component})',
+                        'description': description,
+                    },
                 )
             alerts_sent += 1
 
@@ -236,8 +317,9 @@ class RcaEngine:
             self.store.mark_processed(processed_ids)
 
         return {
-            "status": "success",
-            "processed_count": len(processed_ids),
-            "alerts_evaluated_groups": len(event_groups),
-            "alerts_sent": alerts_sent
+            'status': 'success',
+            'processed_count': len(processed_ids),
+            'alerts_evaluated_groups': len(event_groups),
+            'alerts_sent': alerts_sent,
+            'skipped_singletons': skipped_singletons,
         }
