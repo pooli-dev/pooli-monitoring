@@ -131,13 +131,17 @@ def _format_value(value: float, unit: str) -> str:
 
 def _metric_display_name(metric_key: str) -> str:
     metric_names = {
-        "cpu_usage_ratio": "CPU 사용률",
-        "load1_per_cpu": "1분 Load / CPU 코어",
-        "memory_available_ratio": "가용 메모리 비율",
-        "cpu_iowait_ratio": "CPU I/O 대기 비율",
-        "disk_util_ratio": "디스크 사용률",
-        "disk_read_latency_ms": "디스크 읽기 지연",
-        "disk_write_latency_ms": "디스크 쓰기 지연",
+        "cpu_usage_ratio": "CPU Usage",
+        "load1_per_cpu": "Load1 per CPU",
+        "memory_available_ratio": "Memory Available Ratio",
+        "cpu_iowait_ratio": "CPU I/O Wait Ratio",
+        "disk_util_ratio": "Disk Utilization",
+        "disk_read_latency_ms": "Disk Read Latency",
+        "disk_write_latency_ms": "Disk Write Latency",
+        "mysql_threads_running": "MySQL Threads Running",
+        "mysql_connection_utilization_ratio": "MySQL Connection Utilization",
+        "mysql_slow_queries_rate": "MySQL Slow Query Rate",
+        "mysql_innodb_row_lock_waits_5m": "MySQL InnoDB Row Lock Waits (5m)",
     }
     return metric_names.get(metric_key, metric_key)
 

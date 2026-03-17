@@ -95,13 +95,14 @@ def run_detection(
             f"주요 지표: {top_feature_text}"
         )
 
+        primary_metric = top_features[0]["feature"] if top_features else "aggregate_score"
         store.add_event(
             timestamp=now,
             application=contract.application,
             instance="all",
             source="ecod",
             severity="warning",
-            metric="aggregate_score",
+            metric=primary_metric,
             score=score,
             description=description,
         )
@@ -110,7 +111,7 @@ def run_detection(
                 "service": contract.application,
                 "severity": "warning",
                 "detector": "ecod",
-                "metric": "aggregate_score",
+                "metric": primary_metric,
                 "model": str(metadata.get("model_name", settings.model.name)),
             },
             annotations={

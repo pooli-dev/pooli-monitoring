@@ -1,12 +1,17 @@
 {
   "uid": "db-query-dashboard",
   "title": "DB Query Performance",
-  "tags": ["pooli-be", "mybatis", "database", "prometheus"],
+  "tags": [
+    "pooli-be",
+    "mybatis",
+    "database",
+    "prometheus"
+  ],
   "timezone": "browser",
   "editable": true,
   "graphTooltip": 1,
   "schemaVersion": 38,
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
   "time": {
     "from": "now-1h",
@@ -17,7 +22,10 @@
       {
         "name": "mapper",
         "type": "query",
-        "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-ds"
+        },
         "query": "label_values(mybatis_query_duration_seconds_count{application=\"pooli-be\"}, mapper)",
         "includeAll": true,
         "multi": true,
@@ -26,7 +34,10 @@
       {
         "name": "operation",
         "type": "query",
-        "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-ds"
+        },
         "query": "label_values(mybatis_query_duration_seconds_count{application=\"pooli-be\", mapper=~\"$mapper\"}, operation)",
         "includeAll": true,
         "multi": true,
@@ -40,8 +51,16 @@
       "type": "stat",
       "title": "Total Query RPS",
       "description": "선택한 범위 전체의 MyBatis 쿼리 처리량을 보여줍니다.",
-      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
-      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
       "targets": [
         {
           "expr": "sum(rate(mybatis_query_duration_seconds_count{application=\"pooli-be\"}[5m]))",
@@ -49,10 +68,16 @@
         }
       ],
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"]}
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
       },
       "fieldConfig": {
-        "defaults": {"unit": "reqps"}
+        "defaults": {
+          "unit": "reqps"
+        }
       }
     },
     {
@@ -60,8 +85,16 @@
       "type": "stat",
       "title": "Overall Query P95",
       "description": "전체 MyBatis 쿼리 지연 시간의 P95를 보여줍니다.",
-      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
-      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
       "targets": [
         {
           "expr": "histogram_quantile(0.95, sum(rate(mybatis_query_duration_seconds_bucket{application=\"pooli-be\"}[5m])) by (le))",
@@ -69,16 +102,29 @@
         }
       ],
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"]}
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
       },
       "fieldConfig": {
         "defaults": {
           "unit": "s",
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 0.1},
-              {"color": "red", "value": 0.5}
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 0.5
+              }
             ]
           }
         }
@@ -89,8 +135,16 @@
       "type": "stat",
       "title": "Overall Query P99",
       "description": "전체 MyBatis 쿼리 지연 시간의 P99를 보여주며, 꼬리 지연을 확인할 수 있습니다.",
-      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
-      "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
       "targets": [
         {
           "expr": "histogram_quantile(0.99, sum(rate(mybatis_query_duration_seconds_bucket{application=\"pooli-be\"}[5m])) by (le))",
@@ -98,16 +152,29 @@
         }
       ],
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"]}
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
       },
       "fieldConfig": {
         "defaults": {
           "unit": "s",
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 0.3},
-              {"color": "red", "value": 1}
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.3
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
             ]
           }
         }
@@ -118,8 +185,16 @@
       "type": "stat",
       "title": "Active Mappers",
       "description": "선택한 시간 구간에서 활성화된 고유 MyBatis 매퍼 수를 보여줍니다.",
-      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
-      "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
       "targets": [
         {
           "expr": "count(count by (mapper) (mybatis_query_duration_seconds_count{application=\"pooli-be\"}))",
@@ -127,7 +202,11 @@
         }
       ],
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"]}
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
       }
     },
     {
@@ -135,8 +214,16 @@
       "type": "timeseries",
       "title": "Query Latency P95 by Mapper",
       "description": "매퍼별 쿼리 지연 시간 P95 추이를 보여줍니다.",
-      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 5},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
       "targets": [
         {
           "expr": "histogram_quantile(0.95, sum by (mapper, le) (rate(mybatis_query_duration_seconds_bucket{application=\"pooli-be\", mapper=~\"$mapper\"}[5m])))",
@@ -145,7 +232,9 @@
         }
       ],
       "fieldConfig": {
-        "defaults": {"unit": "s"}
+        "defaults": {
+          "unit": "s"
+        }
       }
     },
     {
@@ -153,8 +242,16 @@
       "type": "timeseries",
       "title": "Query Latency P95 by Operation",
       "description": "매퍼와 오퍼레이션별 쿼리 지연 시간 P95 추이를 보여줍니다.",
-      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 5},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
       "targets": [
         {
           "expr": "histogram_quantile(0.95, sum by (mapper, operation, le) (rate(mybatis_query_duration_seconds_bucket{application=\"pooli-be\", mapper=~\"$mapper\", operation=~\"$operation\"}[5m])))",
@@ -163,7 +260,9 @@
         }
       ],
       "fieldConfig": {
-        "defaults": {"unit": "s"}
+        "defaults": {
+          "unit": "s"
+        }
       }
     },
     {
@@ -171,8 +270,16 @@
       "type": "timeseries",
       "title": "Query RPS by Mapper",
       "description": "매퍼별 쿼리 처리량 추이를 보여줍니다.",
-      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 13},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 13
+      },
       "targets": [
         {
           "expr": "sum by (mapper) (rate(mybatis_query_duration_seconds_count{application=\"pooli-be\", mapper=~\"$mapper\"}[5m]))",
@@ -181,7 +288,9 @@
         }
       ],
       "fieldConfig": {
-        "defaults": {"unit": "reqps"}
+        "defaults": {
+          "unit": "reqps"
+        }
       }
     },
     {
@@ -189,8 +298,16 @@
       "type": "timeseries",
       "title": "Query RPS by Operation",
       "description": "매퍼와 오퍼레이션별 쿼리 처리량 추이를 보여줍니다.",
-      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 13},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 13
+      },
       "targets": [
         {
           "expr": "sum by (mapper, operation) (rate(mybatis_query_duration_seconds_count{application=\"pooli-be\", mapper=~\"$mapper\", operation=~\"$operation\"}[5m]))",
@@ -199,7 +316,9 @@
         }
       ],
       "fieldConfig": {
-        "defaults": {"unit": "reqps"}
+        "defaults": {
+          "unit": "reqps"
+        }
       }
     },
     {
@@ -207,8 +326,16 @@
       "type": "table",
       "title": "Top 10 Slowest Queries (P95)",
       "description": "현재 매퍼/오퍼레이션 필터 기준으로 P95가 가장 느린 매퍼 오퍼레이션 10개를 보여줍니다.",
-      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
-      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 21},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
       "targets": [
         {
           "expr": "topk(10, histogram_quantile(0.95, sum by (mapper, operation, le) (rate(mybatis_query_duration_seconds_bucket{application=\"pooli-be\", mapper=~\"$mapper\", operation=~\"$operation\"}[5m]))))",
@@ -222,13 +349,17 @@
         "cellHeight": "sm",
         "footer": {
           "show": false,
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "fields": "",
           "countRows": false
         }
       },
       "fieldConfig": {
-        "defaults": {"unit": "s"}
+        "defaults": {
+          "unit": "s"
+        }
       },
       "transformations": [
         {
@@ -272,8 +403,16 @@
       "type": "table",
       "title": "Top 10 Most Called Queries",
       "description": "현재 매퍼/오퍼레이션 필터 기준으로 가장 많이 호출된 매퍼 오퍼레이션 10개를 보여줍니다.",
-      "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
-      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 21},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
       "targets": [
         {
           "expr": "topk(10, sum by (mapper, operation) (rate(mybatis_query_duration_seconds_count{application=\"pooli-be\", mapper=~\"$mapper\", operation=~\"$operation\"}[5m])))",
@@ -287,13 +426,17 @@
         "cellHeight": "sm",
         "footer": {
           "show": false,
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "fields": "",
           "countRows": false
         }
       },
       "fieldConfig": {
-        "defaults": {"unit": "reqps"}
+        "defaults": {
+          "unit": "reqps"
+        }
       },
       "transformations": [
         {
@@ -331,6 +474,252 @@
           }
         }
       ]
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "MySQL Threads Running",
+      "description": "Current number of MySQL threads actively executing work.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 31
+      },
+      "targets": [
+        {
+          "expr": "max(mysql_global_status_threads_running{job=\"mysql\"})",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "MySQL Connections Used",
+      "description": "Current MySQL connection utilization ratio against max_connections.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 31
+      },
+      "targets": [
+        {
+          "expr": "max(mysql_global_status_threads_connected{job=\"mysql\"} / clamp_min(mysql_global_variables_max_connections{job=\"mysql\"}, 1))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 0.8
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "MySQL Query Rate",
+      "description": "Queries per second reported by MySQL global status.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 31
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(mysql_global_status_questions{job=\"mysql\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "MySQL Slow Query Rate",
+      "description": "Slow queries per second reported by MySQL global status.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 31
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(mysql_global_status_slow_queries{job=\"mysql\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "MySQL Thread Pressure",
+      "description": "Running threads and connected sessions over time.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "targets": [
+        {
+          "expr": "max(mysql_global_status_threads_running{job=\"mysql\"})",
+          "legendFormat": "Threads running",
+          "refId": "A"
+        },
+        {
+          "expr": "max(mysql_global_status_threads_connected{job=\"mysql\"})",
+          "legendFormat": "Threads connected",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "MySQL Query Pressure",
+      "description": "Query throughput and slow-query throughput over time.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(mysql_global_status_questions{job=\"mysql\"}[5m]))",
+          "legendFormat": "Queries/s",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(mysql_global_status_slow_queries{job=\"mysql\"}[5m]))",
+          "legendFormat": "Slow queries/s",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "MySQL Row Lock Waits (5m)",
+      "description": "Increase in InnoDB row lock waits over the last five minutes.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 44
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(mysql_global_status_innodb_row_lock_waits{job=\"mysql\"}[5m]))",
+          "legendFormat": "Row lock waits",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
     }
   ]
 }
