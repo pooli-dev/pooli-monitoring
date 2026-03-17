@@ -22,32 +22,37 @@ scrape_configs:
           - "10.0.135.58:9100"
         labels:
           instance: db-server
+          node_name: db-server
       - targets:
           - "10.0.132.120:9100"
         labels:
           instance: api-server
+          node_name: api-server
       - targets:
           - "10.0.132.194:9100"
         labels:
           instance: redis-session-sever
+          node_name: redis-session-sever
       - targets:
           - "10.0.143.8:9100"
         labels:
           instance: mongodb-server
+          node_name: mongodb-server
       - targets:
           - "10.0.129.17:9100"
         labels:
           instance: redis-cache-server
+          node_name: redis-cache-server
       - targets:
           - "10.0.134.86:9100"
         labels:
           instance: redis-stream-server
+          node_name: redis-stream-server
       - targets:
           - "10.0.137.213:9100"
         labels:
           instance: traffic-server
-
-
+          node_name: traffic-server
 
   - job_name: "pooli-be"
     metrics_path: "/actuator/prometheus"
@@ -56,13 +61,13 @@ scrape_configs:
           - "10.0.132.120:8080"
         labels:
           instance: api-server
+          node_name: api-server
           application: pooli-be
           env: production
       - targets:
           - "10.0.137.213:8080"
         labels:
           instance: traffic-server
+          node_name: traffic-server
           application: pooli-be
           env: production
-
-
