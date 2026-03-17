@@ -1,0 +1,260 @@
+{
+  "title": "Pooli Infrastructure Quick Overview",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "CPU Busy % (db-server)",
+      "targets": [{"expr":"100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",node_name=\"db-server\"}[1m])) * 100)"}],
+      "gridPos":{"x":0,"y":0,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "RAM Used % (db-server)",
+      "targets": [{"expr":"(1 - (node_memory_MemAvailable_bytes{node_name=\"db-server\"} / node_memory_MemTotal_bytes{node_name=\"db-server\"})) * 100"}],
+      "gridPos":{"x":4,"y":0,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Disk Used % (db-server)",
+      "targets": [{"expr":"(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",node_name=\"db-server\"} / node_filesystem_size_bytes{mountpoint=\"/\",node_name=\"db-server\"})) * 100"}],
+      "gridPos":{"x":8,"y":0,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate (db-server)",
+      "targets": [{"expr":"rate(pooli_request_errors_total{node_name=\"db-server\"}[1m])"}],
+      "gridPos":{"x":12,"y":0,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"req/s"}}
+    },
+    {
+      "type": "stat",
+      "title": "I/O (db-server)",
+      "targets": [{"expr":"rate(node_disk_read_bytes_total{node_name=\"db-server\"}[1m]) + rate(node_disk_written_bytes_total{node_name=\"db-server\"}[1m])"}],
+      "gridPos":{"x":16,"y":0,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"Bps"}}
+    },
+
+    {
+      "type": "stat",
+      "title": "CPU Busy % (api-server)",
+      "targets": [{"expr":"100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",node_name=\"api-server\"}[1m])) * 100)"}],
+      "gridPos":{"x":0,"y":4,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "RAM Used % (api-server)",
+      "targets": [{"expr":"(1 - (node_memory_MemAvailable_bytes{node_name=\"api-server\"} / node_memory_MemTotal_bytes{node_name=\"api-server\"})) * 100"}],
+      "gridPos":{"x":4,"y":4,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Disk Used % (api-server)",
+      "targets": [{"expr":"(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",node_name=\"api-server\"} / node_filesystem_size_bytes{mountpoint=\"/\",node_name=\"api-server\"})) * 100"}],
+      "gridPos":{"x":8,"y":4,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate (api-server)",
+      "targets": [{"expr":"rate(pooli_request_errors_total{node_name=\"api-server\"}[1m])"}],
+      "gridPos":{"x":12,"y":4,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"req/s"}}
+    },
+    {
+      "type": "stat",
+      "title": "I/O (api-server)",
+      "targets": [{"expr":"rate(node_disk_read_bytes_total{node_name=\"api-server\"}[1m]) + rate(node_disk_written_bytes_total{node_name=\"api-server\"}[1m])"}],
+      "gridPos":{"x":16,"y":4,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"Bps"}}
+    },
+
+    {
+      "type": "stat",
+      "title": "CPU Busy % (redis-session-sever)",
+      "targets": [{"expr":"100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",node_name=\"redis-session-sever\"}[1m])) * 100)"}],
+      "gridPos":{"x":0,"y":8,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "RAM Used % (redis-session-sever)",
+      "targets": [{"expr":"(1 - (node_memory_MemAvailable_bytes{node_name=\"redis-session-sever\"} / node_memory_MemTotal_bytes{node_name=\"redis-session-sever\"})) * 100"}],
+      "gridPos":{"x":4,"y":8,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Disk Used % (redis-session-sever)",
+      "targets": [{"expr":"(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",node_name=\"redis-session-sever\"} / node_filesystem_size_bytes{mountpoint=\"/\",node_name=\"redis-session-sever\"})) * 100"}],
+      "gridPos":{"x":8,"y":8,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate (redis-session-sever)",
+      "targets": [{"expr":"rate(pooli_request_errors_total{node_name=\"redis-session-sever\"}[1m])"}],
+      "gridPos":{"x":12,"y":8,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"req/s"}}
+    },
+    {
+      "type": "stat",
+      "title": "I/O (redis-session-sever)",
+      "targets": [{"expr":"rate(node_disk_read_bytes_total{node_name=\"redis-session-sever\"}[1m]) + rate(node_disk_written_bytes_total{node_name=\"redis-session-sever\"}[1m])"}],
+      "gridPos":{"x":16,"y":8,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"Bps"}}
+    },
+
+    {
+      "type": "stat",
+      "title": "CPU Busy % (mongodb-server)",
+      "targets": [{"expr":"100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",node_name=\"mongodb-server\"}[1m])) * 100)"}],
+      "gridPos":{"x":0,"y":12,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "RAM Used % (mongodb-server)",
+      "targets": [{"expr":"(1 - (node_memory_MemAvailable_bytes{node_name=\"mongodb-server\"} / node_memory_MemTotal_bytes{node_name=\"mongodb-server\"})) * 100"}],
+      "gridPos":{"x":4,"y":12,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Disk Used % (mongodb-server)",
+      "targets": [{"expr":"(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",node_name=\"mongodb-server\"} / node_filesystem_size_bytes{mountpoint=\"/\",node_name=\"mongodb-server\"})) * 100"}],
+      "gridPos":{"x":8,"y":12,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate (mongodb-server)",
+      "targets": [{"expr":"rate(pooli_request_errors_total{node_name=\"mongodb-server\"}[1m])"}],
+      "gridPos":{"x":12,"y":12,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"req/s"}}
+    },
+    {
+      "type": "stat",
+      "title": "I/O (mongodb-server)",
+      "targets": [{"expr":"rate(node_disk_read_bytes_total{node_name=\"mongodb-server\"}[1m]) + rate(node_disk_written_bytes_total{node_name=\"mongodb-server\"}[1m])"}],
+      "gridPos":{"x":16,"y":12,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"Bps"}}
+    },
+
+    {
+      "type": "stat",
+      "title": "CPU Busy % (redis-cache-server)",
+      "targets": [{"expr":"100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",node_name=\"redis-cache-server\"}[1m])) * 100)"}],
+      "gridPos":{"x":0,"y":16,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "RAM Used % (redis-cache-server)",
+      "targets": [{"expr":"(1 - (node_memory_MemAvailable_bytes{node_name=\"redis-cache-server\"} / node_memory_MemTotal_bytes{node_name=\"redis-cache-server\"})) * 100"}],
+      "gridPos":{"x":4,"y":16,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Disk Used % (redis-cache-server)",
+      "targets": [{"expr":"(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",node_name=\"redis-cache-server\"} / node_filesystem_size_bytes{mountpoint=\"/\",node_name=\"redis-cache-server\"})) * 100"}],
+      "gridPos":{"x":8,"y":16,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate (redis-cache-server)",
+      "targets": [{"expr":"rate(pooli_request_errors_total{node_name=\"redis-cache-server\"}[1m])"}],
+      "gridPos":{"x":12,"y":16,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"req/s"}}
+    },
+    {
+      "type": "stat",
+      "title": "I/O (redis-cache-server)",
+      "targets": [{"expr":"rate(node_disk_read_bytes_total{node_name=\"redis-cache-server\"}[1m]) + rate(node_disk_written_bytes_total{node_name=\"redis-cache-server\"}[1m])"}],
+      "gridPos":{"x":16,"y":16,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"Bps"}}
+    },
+
+    {
+      "type": "stat",
+      "title": "CPU Busy % (redis-stream-server)",
+      "targets": [{"expr":"100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",node_name=\"redis-stream-server\"}[1m])) * 100)"}],
+      "gridPos":{"x":0,"y":20,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "RAM Used % (redis-stream-server)",
+      "targets": [{"expr":"(1 - (node_memory_MemAvailable_bytes{node_name=\"redis-stream-server\"} / node_memory_MemTotal_bytes{node_name=\"redis-stream-server\"})) * 100"}],
+      "gridPos":{"x":4,"y":20,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Disk Used % (redis-stream-server)",
+      "targets": [{"expr":"(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",node_name=\"redis-stream-server\"} / node_filesystem_size_bytes{mountpoint=\"/\",node_name=\"redis-stream-server\"})) * 100"}],
+      "gridPos":{"x":8,"y":20,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate (redis-stream-server)",
+      "targets": [{"expr":"rate(pooli_request_errors_total{node_name=\"redis-stream-server\"}[1m])"}],
+      "gridPos":{"x":12,"y":20,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"req/s"}}
+    },
+    {
+      "type": "stat",
+      "title": "I/O (redis-stream-server)",
+      "targets": [{"expr":"rate(node_disk_read_bytes_total{node_name=\"redis-stream-server\"}[1m]) + rate(node_disk_written_bytes_total{node_name=\"redis-stream-server\"}[1m])"}],
+      "gridPos":{"x":16,"y":20,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"Bps"}}
+    },
+
+    {
+      "type": "stat",
+      "title": "CPU Busy % (traffic-server)",
+      "targets": [{"expr":"100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",node_name=\"traffic-server\"}[1m])) * 100)"}],
+      "gridPos":{"x":0,"y":24,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "RAM Used % (traffic-server)",
+      "targets": [{"expr":"(1 - (node_memory_MemAvailable_bytes{node_name=\"traffic-server\"} / node_memory_MemTotal_bytes{node_name=\"traffic-server\"})) * 100"}],
+      "gridPos":{"x":4,"y":24,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Disk Used % (traffic-server)",
+      "targets": [{"expr":"(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",node_name=\"traffic-server\"} / node_filesystem_size_bytes{mountpoint=\"/\",node_name=\"traffic-server\"})) * 100"}],
+      "gridPos":{"x":8,"y":24,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"percent"}}
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate (traffic-server)",
+      "targets": [{"expr":"rate(pooli_request_errors_total{node_name=\"traffic-server\"}[1m])"}],
+      "gridPos":{"x":12,"y":24,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"req/s"}}
+    },
+    {
+      "type": "stat",
+      "title": "I/O (traffic-server)",
+      "targets": [{"expr":"rate(node_disk_read_bytes_total{node_name=\"traffic-server\"}[1m]) + rate(node_disk_written_bytes_total{node_name=\"traffic-server\"}[1m])"}],
+      "gridPos":{"x":16,"y":24,"w":4,"h":4},
+      "fieldConfig":{"defaults":{"unit":"Bps"}}
+    }
+  ]
+}

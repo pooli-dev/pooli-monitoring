@@ -10,4 +10,14 @@ providers:
     allowUiUpdates: true
 
     options:
-      path: /etc/grafana/dashboards
+      path: /etc/grafana/dashboards/traffic-generator
+
+  - name: 'Pooli Infrastructure Dashboards'
+    orgId: 1
+    folder: 'Pooli Infrastructure'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/dashboards/pooli
