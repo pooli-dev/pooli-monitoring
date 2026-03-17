@@ -318,7 +318,7 @@
       },
       "targets": [
         {
-          "expr": "avg(rate({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\"} |= \"traffic_stream_record_done\" | json | logfmt | unwrap latency [5m]))",
+          "expr": "avg(rate({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\"} |= \"traffic_stream_record_done\" | json | logfmt | latency =~ \"[0-9]+\" | unwrap latency [5m]))",
           "refId": "A"
         }
       ]
