@@ -13,6 +13,7 @@ alertmanager:
 
 artifacts:
   dir: artifacts
+  rca_db_path: artifacts/rca/rca_events.db
 
 model:
   name: ecod
