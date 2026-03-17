@@ -6,7 +6,7 @@
   "timezone": "browser",
   "panels": [
     {
-      "type": "panel-group",
+      "type": "row",
       "title": "db-server",
       "collapsed": false,
       "gridPos": {
@@ -17,7 +17,22 @@
       },
       "panels": [
         {
-          "type": "timeseries",
+          "type": "text",
+          "title": "",
+          "gridPos": {
+            "x": 0,
+            "y": 1,
+            "w": 4,
+            "h": 4
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "<div style=\"display:flex;align-items:center;justify-content:center;height:100%;text-align:center;\"><h2 style=\"margin:0;\">db-server</h2></div>"
+          },
+          "transparent": true
+        },
+        {
+          "type": "gauge",
           "title": "CPU Busy %",
           "targets": [
             {
@@ -30,18 +45,52 @@
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "percent"
+              "unit": "percent",
+              "min": 0,
+              "max": 100,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              }
             }
           },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "text": {}
+          },
           "gridPos": {
-            "x": 0,
+            "x": 4,
             "y": 1,
             "w": 4,
             "h": 4
           }
         },
         {
-          "type": "timeseries",
+          "type": "gauge",
           "title": "RAM Used %",
           "targets": [
             {
@@ -54,18 +103,52 @@
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "percent"
+              "unit": "percent",
+              "min": 0,
+              "max": 100,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              }
             }
           },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "text": {}
+          },
           "gridPos": {
-            "x": 4,
+            "x": 8,
             "y": 1,
             "w": 4,
             "h": 4
           }
         },
         {
-          "type": "timeseries",
+          "type": "gauge",
           "title": "Disk Used %",
           "targets": [
             {
@@ -78,18 +161,52 @@
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "percent"
+              "unit": "percent",
+              "min": 0,
+              "max": 100,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              }
             }
           },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "text": {}
+          },
           "gridPos": {
-            "x": 8,
+            "x": 12,
             "y": 1,
             "w": 4,
             "h": 4
           }
         },
         {
-          "type": "timeseries",
+          "type": "gauge",
           "title": "Error Rate",
           "targets": [
             {
@@ -102,18 +219,47 @@
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "req/s"
+              "unit": "req/s",
+              "min": 0,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 10
+                  }
+                ]
+              }
             }
           },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "text": {}
+          },
           "gridPos": {
-            "x": 12,
+            "x": 16,
             "y": 1,
             "w": 4,
             "h": 4
           }
         },
         {
-          "type": "timeseries",
+          "type": "gauge",
           "title": "I/O",
           "targets": [
             {
@@ -126,11 +272,44 @@
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "Bps"
+              "unit": "Bps",
+              "min": 0,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 10000000
+                  },
+                  {
+                    "color": "red",
+                    "value": 50000000
+                  }
+                ]
+              }
             }
           },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "text": {}
+          },
           "gridPos": {
-            "x": 16,
+            "x": 20,
             "y": 1,
             "w": 4,
             "h": 4
@@ -139,7 +318,7 @@
       ]
     },
     {
-      "type": "panel-group",
+      "type": "row",
       "title": "api-server",
       "collapsed": false,
       "gridPos": {
@@ -150,7 +329,22 @@
       },
       "panels": [
         {
-          "type": "timeseries",
+          "type": "text",
+          "title": "",
+          "gridPos": {
+            "x": 0,
+            "y": 7,
+            "w": 4,
+            "h": 4
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "<div style=\"display:flex;align-items:center;justify-content:center;height:100%;text-align:center;\"><h2 style=\"margin:0;\">api-server</h2></div>"
+          },
+          "transparent": true
+        },
+        {
+          "type": "gauge",
           "title": "CPU Busy %",
           "targets": [
             {
@@ -163,18 +357,52 @@
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "percent"
+              "unit": "percent",
+              "min": 0,
+              "max": 100,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              }
             }
           },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "text": {}
+          },
           "gridPos": {
-            "x": 0,
-            "y": 1,
+            "x": 4,
+            "y": 7,
             "w": 4,
             "h": 4
           }
         },
         {
-          "type": "timeseries",
+          "type": "gauge",
           "title": "RAM Used %",
           "targets": [
             {
@@ -187,12 +415,46 @@
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "percent"
+              "unit": "percent",
+              "min": 0,
+              "max": 100,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              }
             }
           },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "text": {}
+          },
           "gridPos": {
-            "x": 4,
-            "y": 1,
+            "x": 8,
+            "y": 7,
             "w": 4,
             "h": 4
           }
