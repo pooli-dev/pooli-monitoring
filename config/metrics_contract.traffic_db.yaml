@@ -1,0 +1,108 @@
+version: 1
+application: pooli-be
+
+metrics:
+  - key: traffic_stream_requests_tps
+    description: Traffic request TPS entering the stream pipeline
+    required: true
+    unit: rps
+    aggregation: service
+    window: instant
+    promql: |
+      max(traffic_stream_requests_tps{application="pooli-be"}) or vector(0)
+
+  - key: traffic_stream_enqueue_latency
+    description: Average enqueue latency in seconds over 5 minutes
+    required: true
+    unit: seconds
+    aggregation: service
+    window: 5m
+    promql: |
+      (
+        sum(rate(traffic_stream_enqueue_latency_seconds_sum{application="pooli-be"}[5m]))
+        /
+        clamp_min(
+          sum(rate(traffic_stream_enqueue_latency_seconds_count{application="pooli-be"}[5m])),
+          0.001
+        )
+      ) or vector(0)
+
+  - key: traffic_stream_length
+    description: Redis stream length for traffic requests
+    required: true
+    unit: count
+    aggregation: service
+    window: instant
+    promql: |
+      max(traffic_stream_length{application="pooli-be"}) or vector(0)
+
+  - key: traffic_stream_pending_messages
+    description: Pending traffic stream messages waiting for processing
+    required: true
+    unit: count
+    aggregation: service
+    window: instant
+    promql: |
+      max(traffic_stream_pending_messages{application="pooli-be"}) or vector(0)
+
+  - key: traffic_stream_oldest_pending_idle_seconds
+    description: Idle time of the oldest pending traffic message
+    required: true
+    unit: seconds
+    aggregation: service
+    window: instant
+    promql: |
+      max(traffic_stream_oldest_pending_idle_seconds{application="pooli-be"}) or vector(0)
+
+  - key: db_query_rate
+    description: Total MyBatis query executions per second in the traffic pipeline
+    required: true
+    unit: rps
+    aggregation: service
+    window: 5m
+    promql: |
+      sum(
+        rate(
+          mybatis_query_duration_seconds_count{application="pooli-be"}[5m]
+        )
+      ) or vector(0)
+
+  - key: db_latency_p95
+    description: Service-level p95 MyBatis query latency in the traffic pipeline
+    required: true
+    unit: seconds
+    aggregation: service
+    window: 5m
+    promql: |
+      histogram_quantile(
+        0.95,
+        sum by (le) (
+          rate(
+            mybatis_query_duration_seconds_bucket{application="pooli-be"}[5m]
+          )
+        )
+      ) or vector(0)
+
+  - key: active_db_connections
+    description: Number of active Hikari DB connections
+    required: false
+    unit: count
+    aggregation: service
+    window: instant
+    promql: |
+      max(hikaricp_connections_active{application="pooli-be"}) or vector(0)
+
+labels:
+  required:
+    - application
+  recommended:
+    - instance
+    - job
+    - mapper
+    - operation
+  forbidden:
+    - userId
+    - sessionId
+    - traceId
+    - rawPath
+    - queryString

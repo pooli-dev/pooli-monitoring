@@ -1,0 +1,27 @@
+prometheus:
+  base_url: http://localhost:9090
+  timeout_seconds: 15
+  step_seconds: 15
+
+alertmanager:
+  enabled: true
+  base_url: http://localhost:9093
+  route: /api/v2/alerts
+  default_labels:
+    service: pooli-be
+    source: pyod-aiops
+    profile: traffic_db
+
+artifacts:
+  dir: /opt/pooli-monitoring/artifacts/traffic_db
+
+model:
+  name: ecod
+  contamination: 0.01
+  rolling_window: 30
+  history_hours: 24
+  min_training_rows: 50
+
+detection:
+  lookback_points: 33
+  alert_score_margin: 0.0
