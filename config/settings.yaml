@@ -13,6 +13,7 @@ alertmanager:
 
 artifacts:
   dir: /opt/pooli-monitoring/artifacts/current
+  rca_db_path: /opt/pooli-monitoring/artifacts/rca/rca_events.db
 
 model:
   name: ecod
