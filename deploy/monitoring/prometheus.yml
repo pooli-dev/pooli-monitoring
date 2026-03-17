@@ -71,3 +71,13 @@ scrape_configs:
           node_name: traffic-server
           application: pooli-be
           env: production
+
+  - job_name: "mysql"
+    static_configs:
+      - targets:
+          - "10.0.135.58:9104"
+        labels:
+          instance: db-server
+          node_name: db-server
+          service: mysql
+          env: production

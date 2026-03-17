@@ -12,6 +12,7 @@ import yaml
 from .alerting import AlertmanagerClient
 from .config import AppSettings
 from .prometheus_client import PrometheusClient, build_range_frame
+from .rca_engine import EventStore
 
 
 @dataclass(slots=True)
@@ -140,6 +141,7 @@ def _metric_display_name(metric_key: str) -> str:
     }
     return metric_names.get(metric_key, metric_key)
 
+
 def _format_breach_points(points: list[dict[str, Any]], unit: str) -> str:
     if not points:
         return "- 없음"
@@ -244,14 +246,13 @@ def _evaluate_series(
     }
 
 
-def _send_alert(
-    alert_client: AlertmanagerClient,
+def _build_alert_context(
     application: str,
     metric: BaselineMetricRule,
     series_name: str,
     finding: dict[str, Any],
     detected_at: datetime,
-) -> None:
+) -> tuple[dict[str, str], str, str]:
     labels = _series_labels(series_name)
     instance = labels.get("instance", series_name)
     current_value = float(finding["current_value"])
@@ -264,43 +265,90 @@ def _send_alert(
     metric_name = _metric_display_name(metric.key)
     warn_breach_points = _format_breach_points(list(finding["warn_breach_points"]), metric.unit)
     warn_value_text = (
-        f"{_format_value(metric.warn_value, metric.unit)}"
+        _format_value(metric.warn_value, metric.unit)
         if metric.warn_value is not None
         else "값 기준 없음"
     )
     critical_value_text = (
-        f"{_format_value(metric.critical_value, metric.unit)}"
+        _format_value(metric.critical_value, metric.unit)
         if metric.critical_value is not None
         else "값 기준 없음"
     )
 
+    summary = f"[AIOps][{severity}] {instance} {metric_name} 이상 탐지"
+    description = (
+        f"서비스: {application}\n"
+        f"인스턴스: {instance}\n"
+        f"탐지 방식: 기준선 감시\n"
+        f"메트릭: {metric_name}\n"
+        f"심각도: {severity}\n"
+        f"상태: firing\n\n"
+        f"현재값: {_format_value(current_value, metric.unit)}\n"
+        f"기준값: {_format_value(baseline_median, metric.unit)}\n"
+        f"이상 점수(z): {latest_z:.2f}\n"
+        f"최근 {observed_points}개 포인트 중 {warn_hits}회 경고 조건 충족\n"
+        f"경고 충족 시각:\n{warn_breach_points}\n"
+        f"경고 판정 기준: 최근 {observed_points}개 포인트 중 {required_breaches}개 이상에서 z >= {metric.warn_z:.1f} 이고 현재값 >= {warn_value_text}\n"
+        f"치명 판정 기준: 최근 {observed_points}개 포인트 중 {required_breaches}개 이상에서 z >= {metric.critical_z:.1f} 이고 현재값 >= {critical_value_text}\n"
+        f"탐지 시각: {_format_detected_at(detected_at)}"
+    )
+    return labels, summary, description
+
+
+def _send_alert(
+    alert_client: AlertmanagerClient,
+    application: str,
+    metric: BaselineMetricRule,
+    series_name: str,
+    finding: dict[str, Any],
+    detected_at: datetime,
+) -> None:
+    labels, summary, description = _build_alert_context(
+        application=application,
+        metric=metric,
+        series_name=series_name,
+        finding=finding,
+        detected_at=detected_at,
+    )
     alert_client.send_anomaly(
         labels={
             "service": application,
-            "severity": severity,
+            "severity": str(finding["severity"]),
             "detector": "baseline",
             "metric": metric.key,
             **labels,
         },
         annotations={
-            "summary": f"[AIOps][{severity}] {instance} {metric_name} 이상 탐지",
-            "description": (
-                f"서비스: {application}\n"
-                f"인스턴스: {instance}\n"
-                f"탐지 방식: 기준선 감시\n"
-                f"메트릭: {metric_name}\n"
-                f"심각도: {severity}\n"
-                f"상태: firing\n\n"
-                f"현재값: {_format_value(current_value, metric.unit)}\n"
-                f"기준값: {_format_value(baseline_median, metric.unit)}\n"
-                f"이상 점수(z): {latest_z:.2f}\n"
-                f"최근 {observed_points}개 포인트 중 {warn_hits}회 경고 조건 충족\n"
-                f"경고 충족 시각:\n{warn_breach_points}\n"
-                f"경고 판정 기준: 최근 {observed_points}개 포인트 중 {required_breaches}개 이상에서 z >= {metric.warn_z:.1f} 이고 현재값 >= {warn_value_text}\n"
-                f"치명 판정 기준: 최근 {observed_points}개 포인트 중 {required_breaches}개 이상에서 z >= {metric.critical_z:.1f} 이고 현재값 >= {critical_value_text}\n"
-                f"탐지 시각: {_format_detected_at(detected_at)}"
-            ),
+            "summary": summary,
+            "description": description,
         },
+    )
+
+
+def _store_alert(
+    store: EventStore,
+    application: str,
+    metric: BaselineMetricRule,
+    series_name: str,
+    finding: dict[str, Any],
+    detected_at: datetime,
+) -> None:
+    labels, _, description = _build_alert_context(
+        application=application,
+        metric=metric,
+        series_name=series_name,
+        finding=finding,
+        detected_at=detected_at,
+    )
+    store.add_event(
+        timestamp=detected_at,
+        application=application,
+        instance=labels.get("instance", series_name),
+        source="baseline",
+        severity=str(finding["severity"]),
+        metric=metric.key,
+        score=float(finding["latest_zscore"]),
+        description=description,
     )
 
 
@@ -319,6 +367,7 @@ def run_baseline_detection(
 
     client = PrometheusClient(settings.prometheus)
     alert_client = AlertmanagerClient(settings.alertmanager)
+    store = EventStore(settings.rca_db_path)
 
     findings: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []
@@ -354,16 +403,18 @@ def run_baseline_detection(
             if finding["severity"] == "ok":
                 continue
 
-            result = {
-                "metric": metric.key,
-                "series": column,
-                "description": metric.description,
-                "unit": metric.unit,
-                **finding,
-            }
-            findings.append(result)
+            findings.append(
+                {
+                    "metric": metric.key,
+                    "series": column,
+                    "description": metric.description,
+                    "unit": metric.unit,
+                    **finding,
+                }
+            )
 
             if not dry_run:
+                _store_alert(store, rules.application, metric, column, finding, now)
                 _send_alert(alert_client, rules.application, metric, column, finding, now)
 
     return {
@@ -376,8 +427,3 @@ def run_baseline_detection(
         "skipped": skipped,
         "errors": errors,
     }
-
-
-
-
-

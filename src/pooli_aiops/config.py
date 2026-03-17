@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -25,6 +25,7 @@ class AlertmanagerSettings:
 @dataclass(slots=True)
 class ArtifactSettings:
     dir: str = "artifacts"
+    rca_db_path: str | None = None
 
 
 @dataclass(slots=True)
@@ -44,7 +45,6 @@ class DetectionSettings:
 
 @dataclass(slots=True)
 class AppSettings:
-    # settings.yaml의 각 섹션을 한곳에 모아 다루는 최상위 설정 객체다.
     prometheus: PrometheusSettings
     alertmanager: AlertmanagerSettings = field(default_factory=AlertmanagerSettings)
     artifacts: ArtifactSettings = field(default_factory=ArtifactSettings)
@@ -55,35 +55,28 @@ class AppSettings:
     def artifact_dir(self) -> Path:
         return Path(self.artifacts.dir)
 
+    @property
+    def rca_db_path(self) -> Path:
+        if self.artifacts.rca_db_path:
+            return Path(self.artifacts.rca_db_path)
+        return self.artifact_dir / "rca_events.db"
+
 
 def _read_yaml(path: Path) -> dict[str, Any]:
-    """YAML 파일을 읽고 비어 있으면 빈 dict를 반환한다."""
+    """Read a YAML file and return an empty dict when it is blank."""
     with path.open("r", encoding="utf-8") as handle:
         return yaml.safe_load(handle) or {}
 
 
 def load_settings(path: str | Path) -> AppSettings:
-    """YAML 원본 데이터를 코드에서 쓰기 쉬운 설정 객체로 변환한다."""
+    """Convert raw YAML settings into typed application settings."""
     config_path = Path(path)
     raw = _read_yaml(config_path)
 
-    # settings.yaml의 각 섹션은 작은 dataclass 객체로 바뀐다.
-    # 이렇게 하면 나머지 코드에서 raw dict보다 읽기 쉽게 접근할 수 있다.
-    prometheus = PrometheusSettings(**raw["prometheus"])
-    alertmanager = AlertmanagerSettings(**raw.get("alertmanager", {}))
-    artifacts = ArtifactSettings(**raw.get("artifacts", {}))
-    model = ModelSettings(**raw.get("model", {}))
-    detection = DetectionSettings(**raw.get("detection", {}))
-
     return AppSettings(
-        prometheus=prometheus,
-        alertmanager=alertmanager,
-        artifacts=artifacts,
-        model=model,
-        detection=detection,
+        prometheus=PrometheusSettings(**raw["prometheus"]),
+        alertmanager=AlertmanagerSettings(**raw.get("alertmanager", {})),
+        artifacts=ArtifactSettings(**raw.get("artifacts", {})),
+        model=ModelSettings(**raw.get("model", {})),
+        detection=DetectionSettings(**raw.get("detection", {})),
     )
-
-
-
-
-

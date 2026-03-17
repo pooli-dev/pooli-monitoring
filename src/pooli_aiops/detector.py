@@ -9,16 +9,17 @@ from .contracts import ContractFile
 from .features import engineer_features
 from .modeling import align_feature_frame, load_artifacts, top_deviations
 from .prometheus_client import PrometheusClient, build_range_frame
+from .rca_engine import EventStore
 
 
 def _format_detected_at(timestamp: datetime) -> str:
-    """알림 메시지에 넣을 탐지 시각 문자열을 만든다."""
+    """Build a local-time timestamp string for alert text."""
     local_time = timestamp.astimezone()
     return local_time.strftime("%Y-%m-%d %H:%M:%S %Z")
 
 
 def _format_top_features(top_features: list[dict[str, float | str]], limit: int = 3) -> str:
-    """상위 이상 feature를 읽기 쉬운 한 줄 문자열로 만든다."""
+    """Render the top contributing features into a compact sentence."""
     formatted: list[str] = []
     for item in top_features[:limit]:
         formatted.append(
@@ -33,7 +34,7 @@ def run_detection(
     dry_run: bool = False,
     timestamp: datetime | None = None,
 ) -> dict[str, Any]:
-    """가장 최근 Prometheus 구간으로 이상 탐지를 수행한다."""
+    """Run anomaly detection against the latest Prometheus window."""
     now = timestamp or datetime.now(timezone.utc)
     model, scaler, metadata = load_artifacts(settings.artifact_dir)
 
@@ -41,10 +42,7 @@ def run_detection(
     metadata_step_seconds = int(metadata.get("step_seconds", settings.prometheus.step_seconds))
     effective_step_seconds = max(metadata_step_seconds, settings.prometheus.step_seconds)
 
-    required_points = max(
-        settings.detection.lookback_points,
-        rolling_window + 3,
-    )
+    required_points = max(settings.detection.lookback_points, rolling_window + 3)
     lookback_seconds = required_points * effective_step_seconds
     start_time = now - timedelta(seconds=lookback_seconds)
 
@@ -87,21 +85,37 @@ def run_detection(
 
     if is_anomaly and not dry_run:
         alert_client = AlertmanagerClient(settings.alertmanager)
+        store = EventStore(settings.rca_db_path)
         detected_at = _format_detected_at(now)
         top_feature_text = _format_top_features(top_features)
+        summary = f"{contract.application} 이상 탐지 발생"
+        description = (
+            f"탐지 점수 {score:.2f}가 임계값 {threshold:.2f}를 초과했습니다. "
+            f"탐지 시각: {detected_at}. "
+            f"주요 지표: {top_feature_text}"
+        )
+
+        store.add_event(
+            timestamp=now,
+            application=contract.application,
+            instance="all",
+            source="ecod",
+            severity="warning",
+            metric="aggregate_score",
+            score=score,
+            description=description,
+        )
         alert_client.send_anomaly(
             labels={
                 "service": contract.application,
                 "severity": "warning",
+                "detector": "ecod",
+                "metric": "aggregate_score",
                 "model": str(metadata.get("model_name", settings.model.name)),
             },
             annotations={
-                "summary": f"{contract.application} 이상 탐지 발생",
-                "description": (
-                    f"탐지 점수 {score:.2f}가 임계값 {threshold:.2f}를 초과했습니다. "
-                    f"탐지 시각: {detected_at}. "
-                    f"주요 지표: {top_feature_text}"
-                ),
+                "summary": summary,
+                "description": description,
                 "top_features": top_feature_text,
             },
         )

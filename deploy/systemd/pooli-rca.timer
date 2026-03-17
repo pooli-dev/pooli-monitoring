@@ -1,0 +1,11 @@
+﻿[Unit]
+Description=Run Pooli RCA aggregation every minute
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=1min
+AccuracySec=1s
+Unit=pooli-rca.service
+
+[Install]
+WantedBy=timers.target
