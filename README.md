@@ -53,6 +53,68 @@ python -m pooli_aiops train --settings config/settings.yaml --contract config/me
 python -m pooli_aiops detect --settings config/settings.yaml --contract config/metrics_contract.yaml --dry-run
 ```
 
+## API Dashboard
+
+### Variables
+
+| 항목 | 의미 | 어떻게 쓰는지 |
+| --- | --- | --- |
+| `instance` | 어떤 `pooli-be` 인스턴스의 메트릭을 볼지 고르는 필터 | 특정 서버만 보고 싶으면 하나 선택, 전체 추세를 보려면 `All` |
+| `uri` | 어떤 API URI를 볼지 고르는 필터 | 특정 API만 보고 싶을 때 사용, 전체 비교면 `All` |
+
+### Panels
+
+| 패널명 | 의미 | 해석 포인트 | 주의사항 |
+| --- | --- | --- | --- |
+| `Total RPS` | 전체 API 요청 처리량 | 현재 API 트래픽 크기를 빠르게 확인 | 정상/비정상은 서비스 평시 기준과 비교해야 함 |
+| `Error Rate (%)` | 전체 요청 중 5xx 비율 | 장애가 실제 사용자 오류로 이어지는지 확인 | 현재 5xx 기준이라 4xx는 포함되지 않음 |
+| `Overall Latency P95` | 전체 API 응답시간의 P95 | 느린 요청이 얼마나 늘었는지 확인 | 평균보다 P95가 실무에서 더 중요 |
+| `Active Endpoints` | 최근 요청이 들어온 URI 개수 | 얼마나 다양한 API가 호출 중인지 확인 | 호출량이 아닌 종류 수임 |
+| `RPS by Endpoint` | URI별, Method별 요청량 추이 | 어떤 API가 트래픽을 많이 먹는지 확인 | 특정 시점 급증 API 찾기에 유용 |
+| `Latency P95 by Endpoint` | URI별, Method별 응답시간 P95 | 느려진 API를 빠르게 식별 | 일부 저트래픽 API는 변동성이 클 수 있음 |
+| `Error Rate (%) by Endpoint` | URI별, Method별 5xx 비율 | 어떤 API가 실제 오류를 내는지 확인 | 트래픽이 아주 적은 API는 비율이 크게 튈 수 있음 |
+| `Status Code Distribution` | 상태코드별 요청량 분포 | 200/400/500대 비중 변화 확인 | 문제 판단 시 절대값과 비율을 같이 봐야 함 |
+| `Top 10 Slowest Endpoints (P95)` | 가장 느린 API 상위 10개 | 병목 API를 우선순위로 볼 때 사용 | 현재 `UNKNOWN`, `/actuator*`, `/favicon.ico`는 제외 |
+| `Top 10 Most Requested Endpoints` | 가장 많이 호출되는 API 상위 10개 | 트래픽 집중 API 파악에 유용 | 현재 `UNKNOWN`, `/actuator*`, `/favicon.ico`는 제외 |
+
+---
+
+## DB Dashboard
+
+### Variables
+
+| 항목 | 의미 | 어떻게 쓰는지 |
+| --- | --- | --- |
+| `mapper` | 어떤 MyBatis Mapper를 볼지 고르는 필터 | 특정 Mapper만 보고 싶으면 선택, 전체면 `All` |
+| `operation` | Mapper 내부 어떤 쿼리 작업을 볼지 고르는 필터 | 특정 메서드 단위 분석 시 사용 |
+
+### Panels
+
+| 패널명 | 의미 | 해석 포인트 | 주의사항 |
+| --- | --- | --- | --- |
+| `Total Query RPS` | 전체 DB 쿼리 실행량 | 현재 DB 부하 크기를 빠르게 확인 | API 요청 수와 1:1 대응은 아님 |
+| `Overall Query P95` | 전체 쿼리 지연시간 P95 | 전반적인 DB 응답 저하 여부 확인 | 느린 소수 쿼리 영향 파악에 유리 |
+| `Overall Query P99` | 전체 쿼리 지연시간 P99 | 극단적으로 느린 쿼리 존재 여부 확인 | P95보다 더 민감해서 튐이 클 수 있음 |
+| `Active Mappers` | 최근 실행된 Mapper 수 | 어떤 DB 기능 영역이 활성화됐는지 확인 | 호출량이 아닌 종류 수임 |
+| `Query Latency P95 by Mapper` | Mapper별 쿼리 지연시간 P95 | 어느 Mapper 계층이 느린지 확인 | 상세 원인은 operation 패널에서 추가 확인 |
+| `Query Latency P95 by Operation` | Mapper+Operation별 쿼리 지연시간 P95 | 어떤 메서드가 느린지 직접 식별 | 실제 병목 SQL 후보를 좁히는 데 유용 |
+| `Query RPS by Mapper` | Mapper별 쿼리 실행량 | 어떤 기능 영역이 DB를 많이 쓰는지 확인 | 고트래픽 Mapper와 고지연 Mapper를 같이 봐야 함 |
+| `Query RPS by Operation` | Mapper+Operation별 쿼리 실행량 | 어떤 쿼리가 가장 자주 호출되는지 확인 | 빈도 높고 느린 쿼리가 우선 개선 대상 |
+| `Top 10 Slowest Queries (P95)` | 가장 느린 쿼리 상위 10개 | 성능 최적화 우선순위 선정용 | 현재 선택한 `mapper`, `operation` 필터 영향을 받음 |
+| `Top 10 Most Called Queries` | 가장 많이 호출된 쿼리 상위 10개 | 부하 집중 지점 파악용 | 호출량만 높고 문제 없을 수도 있으니 P95와 함께 봐야 함 |
+
+---
+
+## 같이 보는 방법
+
+| 상황 | 먼저 볼 항목 | 다음에 볼 항목 |
+| --- | --- | --- |
+| API가 느려짐 | `Overall Latency P95` | `Latency P95 by Endpoint` -> `Top 10 Slowest Endpoints (P95)` |
+| API 오류 증가 | `Error Rate (%)` | `Error Rate (%) by Endpoint` -> `Status Code Distribution` |
+| DB 병목 의심 | `Overall Query P95`, `Overall Query P99` | `Query Latency P95 by Operation` -> `Top 10 Slowest Queries (P95)` |
+| 트래픽 급증 | `Total RPS`, `Total Query RPS` | `Top 10 Most Requested Endpoints`, `Top 10 Most Called Queries` |
+| 특정 기능 장애 분석 | `uri` 또는 `mapper` 필터 적용 | API 패널과 DB 패널을 같은 시간대에서 같이 비교 |
+
 
 ## 현재 전제
 
