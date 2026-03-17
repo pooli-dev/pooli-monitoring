@@ -127,3 +127,66 @@ metrics:
           0.001
         )
       )
+
+
+  - key: mysql_threads_running
+    description: MySQL running thread count by instance
+    unit: ''
+    direction: high
+    labels:
+      - instance
+    warn_z: 2.5
+    critical_z: 4.0
+    warn_value: 8
+    critical_value: 16
+    promql: |
+      max by(instance) (
+        mysql_global_status_threads_running{job="mysql"}
+      )
+
+  - key: mysql_connection_utilization_ratio
+    description: MySQL connection utilization ratio by instance
+    unit: ratio
+    direction: high
+    labels:
+      - instance
+    warn_z: 2.5
+    critical_z: 4.0
+    warn_value: 0.50
+    critical_value: 0.80
+    promql: |
+      max by(instance) (
+        mysql_global_status_threads_connected{job="mysql"}
+        /
+        clamp_min(mysql_global_variables_max_connections{job="mysql"}, 1)
+      )
+
+  - key: mysql_slow_queries_rate
+    description: MySQL slow query rate by instance
+    unit: ''
+    direction: high
+    labels:
+      - instance
+    warn_z: 2.5
+    critical_z: 4.0
+    warn_value: 0.05
+    critical_value: 0.20
+    promql: |
+      sum by(instance) (
+        rate(mysql_global_status_slow_queries{job="mysql"}[5m])
+      )
+
+  - key: mysql_innodb_row_lock_waits_5m
+    description: MySQL InnoDB row lock waits over five minutes by instance
+    unit: ''
+    direction: high
+    labels:
+      - instance
+    warn_z: 2.5
+    critical_z: 4.0
+    warn_value: 1
+    critical_value: 3
+    promql: |
+      sum by(instance) (
+        increase(mysql_global_status_innodb_row_lock_waits{job="mysql"}[5m])
+      )
