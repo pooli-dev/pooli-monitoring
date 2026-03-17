@@ -39,6 +39,7 @@
       "id": 1,
       "type": "stat",
       "title": "Total RPS",
+      "description": "선택한 pooli-be 인스턴스 전체의 API 요청 처리량을 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
       "targets": [
@@ -58,6 +59,7 @@
       "id": 2,
       "type": "stat",
       "title": "Error Rate (%)",
+      "description": "선택한 인스턴스의 전체 API 요청 중 5xx 응답 비율을 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0},
       "targets": [
@@ -86,6 +88,7 @@
       "id": 3,
       "type": "stat",
       "title": "Overall Latency P95",
+      "description": "선택한 전체 요청 기준 API 응답 지연 시간의 P95를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0},
       "targets": [
@@ -114,6 +117,7 @@
       "id": 4,
       "type": "stat",
       "title": "Active Endpoints",
+      "description": "선택한 범위에서 요청이 발생한 고유 API URI 개수를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0},
       "targets": [
@@ -130,6 +134,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "RPS by Endpoint",
+      "description": "HTTP 메서드와 URI별 요청 처리량 추이를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 5},
       "targets": [
@@ -147,6 +152,7 @@
       "id": 6,
       "type": "timeseries",
       "title": "Latency P95 by Endpoint",
+      "description": "HTTP 메서드와 URI별 응답 지연 시간 P95 추이를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 5},
       "targets": [
@@ -164,6 +170,7 @@
       "id": 7,
       "type": "timeseries",
       "title": "Error Rate (%) by Endpoint",
+      "description": "HTTP 메서드와 URI별 5xx 오류율 추이를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 13},
       "targets": [
@@ -181,6 +188,7 @@
       "id": 8,
       "type": "timeseries",
       "title": "Status Code Distribution",
+      "description": "HTTP 상태 코드별로 나뉜 요청 처리량을 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 13},
       "targets": [
@@ -198,6 +206,7 @@
       "id": 9,
       "type": "table",
       "title": "Top 10 Slowest Endpoints (P95)",
+      "description": "P95 기준 가장 느린 API 엔드포인트 10개를 보여줍니다. UNKNOWN, actuator, favicon 요청은 제외됩니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 10, "w": 12, "x": 0, "y": 21},
       "targets": [
@@ -262,6 +271,7 @@
       "id": 10,
       "type": "table",
       "title": "Top 10 Most Requested Endpoints",
+      "description": "요청 비율 기준 가장 많이 호출된 API 엔드포인트 10개를 보여줍니다. UNKNOWN, actuator, favicon 요청은 제외됩니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 10, "w": 12, "x": 12, "y": 21},
       "targets": [

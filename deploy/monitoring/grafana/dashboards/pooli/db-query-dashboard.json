@@ -39,6 +39,7 @@
       "id": 1,
       "type": "stat",
       "title": "Total Query RPS",
+      "description": "선택한 범위 전체의 MyBatis 쿼리 처리량을 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
       "targets": [
@@ -58,6 +59,7 @@
       "id": 2,
       "type": "stat",
       "title": "Overall Query P95",
+      "description": "전체 MyBatis 쿼리 지연 시간의 P95를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0},
       "targets": [
@@ -86,6 +88,7 @@
       "id": 3,
       "type": "stat",
       "title": "Overall Query P99",
+      "description": "전체 MyBatis 쿼리 지연 시간의 P99를 보여주며, 꼬리 지연을 확인할 수 있습니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0},
       "targets": [
@@ -114,6 +117,7 @@
       "id": 4,
       "type": "stat",
       "title": "Active Mappers",
+      "description": "선택한 시간 구간에서 활성화된 고유 MyBatis 매퍼 수를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0},
       "targets": [
@@ -130,6 +134,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Query Latency P95 by Mapper",
+      "description": "매퍼별 쿼리 지연 시간 P95 추이를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 5},
       "targets": [
@@ -147,6 +152,7 @@
       "id": 6,
       "type": "timeseries",
       "title": "Query Latency P95 by Operation",
+      "description": "매퍼와 오퍼레이션별 쿼리 지연 시간 P95 추이를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 5},
       "targets": [
@@ -164,6 +170,7 @@
       "id": 7,
       "type": "timeseries",
       "title": "Query RPS by Mapper",
+      "description": "매퍼별 쿼리 처리량 추이를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 13},
       "targets": [
@@ -181,6 +188,7 @@
       "id": 8,
       "type": "timeseries",
       "title": "Query RPS by Operation",
+      "description": "매퍼와 오퍼레이션별 쿼리 처리량 추이를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 13},
       "targets": [
@@ -198,6 +206,7 @@
       "id": 9,
       "type": "table",
       "title": "Top 10 Slowest Queries (P95)",
+      "description": "현재 매퍼/오퍼레이션 필터 기준으로 P95가 가장 느린 매퍼 오퍼레이션 10개를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 10, "w": 12, "x": 0, "y": 21},
       "targets": [
@@ -262,6 +271,7 @@
       "id": 10,
       "type": "table",
       "title": "Top 10 Most Called Queries",
+      "description": "현재 매퍼/오퍼레이션 필터 기준으로 가장 많이 호출된 매퍼 오퍼레이션 10개를 보여줍니다.",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
       "gridPos": {"h": 10, "w": 12, "x": 12, "y": 21},
       "targets": [
