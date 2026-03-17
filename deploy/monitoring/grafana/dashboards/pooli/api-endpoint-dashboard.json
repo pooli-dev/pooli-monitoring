@@ -196,37 +196,131 @@
     },
     {
       "id": 9,
-      "type": "bargauge",
+      "type": "table",
       "title": "Top 10 Slowest Endpoints (P95)",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 21},
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 21},
       "targets": [
         {
-          "expr": "topk(10, histogram_quantile(0.95, sum by (uri, le) (rate(http_server_requests_seconds_bucket{application=\"pooli-be\", instance=~\"$instance\"}[5m]))))",
-          "legendFormat": "{{uri}}",
+          "expr": "topk(10, histogram_quantile(0.95, sum by (method, uri, le) (rate(http_server_requests_seconds_bucket{application=\"pooli-be\", instance=~\"$instance\", uri!=\"UNKNOWN\", uri!~\"/actuator.*|/favicon.ico\"}[5m]))))",
+          "format": "table",
+          "instant": true,
           "refId": "A"
         }
       ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "fields": "",
+          "countRows": false
+        }
+      },
       "fieldConfig": {
         "defaults": {"unit": "s"}
-      }
+      },
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Value",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "application": true,
+              "instance": true,
+              "job": true
+            },
+            "indexByName": {
+              "method": 0,
+              "uri": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "method": "Method",
+              "uri": "URI",
+              "Value": "P95"
+            }
+          }
+        }
+      ]
     },
     {
       "id": 10,
-      "type": "bargauge",
+      "type": "table",
       "title": "Top 10 Most Requested Endpoints",
       "datasource": {"type": "prometheus", "uid": "prometheus-ds"},
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 21},
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 21},
       "targets": [
         {
-          "expr": "topk(10, sum by (uri) (rate(http_server_requests_seconds_count{application=\"pooli-be\", instance=~\"$instance\"}[5m])))",
-          "legendFormat": "{{uri}}",
+          "expr": "topk(10, sum by (method, uri) (rate(http_server_requests_seconds_count{application=\"pooli-be\", instance=~\"$instance\", uri!=\"UNKNOWN\", uri!~\"/actuator.*|/favicon.ico\"}[5m])))",
+          "format": "table",
+          "instant": true,
           "refId": "A"
         }
       ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "fields": "",
+          "countRows": false
+        }
+      },
       "fieldConfig": {
         "defaults": {"unit": "reqps"}
-      }
+      },
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Value",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "application": true,
+              "instance": true,
+              "job": true
+            },
+            "indexByName": {
+              "method": 0,
+              "uri": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "method": "Method",
+              "uri": "URI",
+              "Value": "RPS"
+            }
+          }
+        }
+      ]
     }
   ]
 }
