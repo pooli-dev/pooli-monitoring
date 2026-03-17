@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Pooli traffic anomaly detection every minute
+
+[Timer]
+OnBootSec=75s
+OnUnitActiveSec=1min
+AccuracySec=1s
+Unit=pooli-traffic-detect.service
+
+[Install]
+WantedBy=timers.target
