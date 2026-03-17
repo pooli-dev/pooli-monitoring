@@ -1,0 +1,495 @@
+{
+  "uid": "family-traffic-usage-audit",
+  "title": "Family Traffic Usage Audit",
+  "tags": ["pooli", "usage", "mysql", "traffic"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "sql_ds",
+        "label": "MySQL Datasource",
+        "type": "datasource",
+        "query": "mysql",
+        "refresh": 1
+      },
+      {
+        "name": "family_id",
+        "label": "Family ID",
+        "type": "query",
+        "datasource": {
+          "type": "mysql",
+          "uid": "${sql_ds}"
+        },
+        "query": "SELECT DISTINCT family_id AS __value, CAST(family_id AS CHAR) AS __text FROM TRAFFIC_DEDUCT_DONE ORDER BY 1",
+        "definition": "SELECT DISTINCT family_id AS __value, CAST(family_id AS CHAR) AS __text FROM TRAFFIC_DEDUCT_DONE ORDER BY 1",
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Deducted Bytes",
+      "description": "Selected family's total deducted bytes over the dashboard time range.",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${sql_ds}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${sql_ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT UNIX_TIMESTAMP(NOW()) AS time_sec,\n       COALESCE(SUM(deducted_total_bytes), 0) AS value\nFROM TRAFFIC_DEDUCT_DONE\nWHERE family_id = ${family_id}\n  AND $__timeFilter(finished_at);",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Processed Events",
+      "description": "Number of completed deduction events in the selected time range.",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${sql_ds}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${sql_ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT UNIX_TIMESTAMP(NOW()) AS time_sec,\n       COUNT(*) AS value\nFROM TRAFFIC_DEDUCT_DONE\nWHERE family_id = ${family_id}\n  AND $__timeFilter(finished_at);",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Current Remaining Data",
+      "description": "Most recent remaining shared data for the selected family.",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${sql_ds}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${sql_ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT UNIX_TIMESTAMP(finished_at) AS time_sec,\n       api_remaining_data AS value\nFROM TRAFFIC_DEDUCT_DONE\nWHERE family_id = ${family_id}\n  AND $__timeFilter(finished_at)\nORDER BY finished_at DESC\nLIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Family Deducted Bytes Over Time",
+      "description": "Family-level usage trend over time.",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${sql_ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${sql_ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(finished_at, '5m'),\n       COALESCE(SUM(deducted_total_bytes), 0) AS value\nFROM TRAFFIC_DEDUCT_DONE\nWHERE family_id = ${family_id}\n  AND $__timeFilter(finished_at)\nGROUP BY 1\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Usage By Line",
+      "description": "Stacked time series showing which line consumed the shared data.",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${sql_ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${sql_ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(finished_at, '5m'),\n       CAST(line_id AS CHAR) AS metric,\n       COALESCE(SUM(deducted_total_bytes), 0) AS value\nFROM TRAFFIC_DEDUCT_DONE\nWHERE family_id = ${family_id}\n  AND $__timeFilter(finished_at)\nGROUP BY 1, 2\nORDER BY 1, 2;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Remaining Shared Data Over Time",
+      "description": "Timeline of remaining family shared data after each deduction event.",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${sql_ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 13
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${sql_ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT UNIX_TIMESTAMP(finished_at) AS time_sec,\n       api_remaining_data AS value\nFROM TRAFFIC_DEDUCT_DONE\nWHERE family_id = ${family_id}\n  AND $__timeFilter(finished_at)\nORDER BY finished_at;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "barchart",
+      "title": "Top Lines By Usage",
+      "description": "Top line_ids by deducted bytes in the selected time range.",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${sql_ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 13
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${sql_ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CAST(line_id AS CHAR) AS line_id,\n       COALESCE(SUM(deducted_total_bytes), 0) AS deducted_bytes\nFROM TRAFFIC_DEDUCT_DONE\nWHERE family_id = ${family_id}\n  AND $__timeFilter(finished_at)\nGROUP BY line_id\nORDER BY deducted_bytes DESC\nLIMIT 10;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "barchart",
+      "title": "Events By Final Status",
+      "description": "Distribution of event outcomes for the selected family.",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${sql_ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${sql_ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT final_status,\n       COUNT(*) AS event_count\nFROM TRAFFIC_DEDUCT_DONE\nWHERE family_id = ${family_id}\n  AND $__timeFilter(finished_at)\nGROUP BY final_status\nORDER BY event_count DESC;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "barchart",
+      "title": "Events By Lua Status",
+      "description": "Distribution of the last Lua decision/status.",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${sql_ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${sql_ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(last_lua_status, 'UNKNOWN') AS last_lua_status,\n       COUNT(*) AS event_count\nFROM TRAFFIC_DEDUCT_DONE\nWHERE family_id = ${family_id}\n  AND $__timeFilter(finished_at)\nGROUP BY COALESCE(last_lua_status, 'UNKNOWN')\nORDER BY event_count DESC;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Threshold Crossing Events (10 MB)",
+      "description": "Who consumed data when the remaining shared data dropped to 10 MB or less.",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${sql_ds}"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${sql_ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT finished_at,\n       line_id,\n       family_id,\n       deducted_total_bytes,\n       api_remaining_data,\n       final_status,\n       COALESCE(last_lua_status, 'UNKNOWN') AS last_lua_status,\n       trace_id\nFROM TRAFFIC_DEDUCT_DONE\nWHERE family_id = ${family_id}\n  AND $__timeFilter(finished_at)\n  AND api_remaining_data <= 10 * 1024 * 1024\nORDER BY finished_at DESC\nLIMIT 100;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "deducted_total_bytes"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "api_remaining_data"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Recent Deduct Records",
+      "description": "Latest deduction records for the selected family.",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${sql_ds}"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${sql_ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT finished_at,\n       line_id,\n       family_id,\n       app_id,\n       deducted_total_bytes,\n       api_total_data,\n       api_remaining_data,\n       final_status,\n       COALESCE(last_lua_status, 'UNKNOWN') AS last_lua_status,\n       trace_id\nFROM TRAFFIC_DEDUCT_DONE\nWHERE family_id = ${family_id}\n  AND $__timeFilter(finished_at)\nORDER BY finished_at DESC\nLIMIT 200;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "deducted_total_bytes"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "api_total_data"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "api_remaining_data"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
