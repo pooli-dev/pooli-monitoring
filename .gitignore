@@ -4,6 +4,7 @@ __pycache__/
 artifacts/*.joblib
 artifacts/*.json
 artifacts/*.csv
+artifacts/rca/
 !artifacts/.gitkeep
 .idea
 
