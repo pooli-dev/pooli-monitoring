@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import argparse
 import json
@@ -12,6 +12,7 @@ from .contracts import load_contract
 from .detector import run_detection
 from .synthetic_data import SyntheticDatasetConfig, generate_datasets
 from .trainer import run_training
+from .rca_engine import RcaEngine
 
 
 def _parse_datetime(value: str | None) -> datetime | None:
@@ -117,6 +118,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Skip sending alerts even if anomaly is detected",
     )
 
+    rca_parser = subparsers.add_parser(
+        "rca",
+        help="Group events stored in RCA DB and analyze root causes",
+    )
+    rca_parser.add_argument(
+        "--settings",
+        type=Path,
+        required=True,
+        help="Path to settings YAML",
+    )
+    rca_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Skip sending RCA alerts",
+    )
+    rca_parser.add_argument(
+        "--time-window-minutes",
+        type=int,
+        default=5,
+        help="Time window in minutes to group events",
+    )
+
     generate_parser = subparsers.add_parser(
         "generate-dataset",
         help="Generate synthetic datasets for classification, anomaly detection, and forecasting",
@@ -206,6 +229,13 @@ def main(argv: list[str] | None = None) -> int:
             rules=rules,
             dry_run=args.dry_run,
             timestamp=_parse_datetime(args.time),
+        )
+    elif args.command == "rca":
+        settings = load_settings(args.settings)
+        engine = RcaEngine(settings)
+        result = engine.run_rca(
+            dry_run=args.dry_run,
+            time_window_minutes=args.time_window_minutes,
         )
     else:
         settings = load_settings(args.settings)

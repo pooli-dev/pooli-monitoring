@@ -25,6 +25,7 @@ class AlertmanagerSettings:
 @dataclass(slots=True)
 class ArtifactSettings:
     dir: str = "artifacts"
+    rca_db_path: str = "artifacts/rca_events.db"
 
 
 @dataclass(slots=True)

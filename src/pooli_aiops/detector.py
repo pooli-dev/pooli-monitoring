@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -9,6 +9,7 @@ from .contracts import ContractFile
 from .features import engineer_features
 from .modeling import align_feature_frame, load_artifacts, top_deviations
 from .prometheus_client import PrometheusClient, build_range_frame
+from .rca_engine import EventStore
 
 
 def _format_detected_at(timestamp: datetime) -> str:
@@ -86,24 +87,25 @@ def run_detection(
     }
 
     if is_anomaly and not dry_run:
-        alert_client = AlertmanagerClient(settings.alertmanager)
+        store = EventStore(settings.artifacts.rca_db_path)
         detected_at = _format_detected_at(now)
         top_feature_text = _format_top_features(top_features)
-        alert_client.send_anomaly(
-            labels={
-                "service": contract.application,
-                "severity": "warning",
-                "model": str(metadata.get("model_name", settings.model.name)),
-            },
-            annotations={
-                "summary": f"{contract.application} 이상 탐지 발생",
-                "description": (
-                    f"탐지 점수 {score:.2f}가 임계값 {threshold:.2f}를 초과했습니다. "
-                    f"탐지 시각: {detected_at}. "
-                    f"주요 지표: {top_feature_text}"
-                ),
-                "top_features": top_feature_text,
-            },
+        
+        description = (
+            f"탐지 점수 {score:.2f}가 임계값 {threshold:.2f}를 초과했습니다. "
+            f"탐지 시각: {detected_at}. "
+            f"주요 지표: {top_feature_text}"
+        )
+        
+        store.add_event(
+            timestamp=now,
+            application=contract.application,
+            instance="all",  # ML Model acts on aggregate features unless specified
+            source="ecod",
+            severity="warning",
+            metric="aggregate_score",
+            score=score,
+            description=description,
         )
 
     return result

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -12,6 +12,7 @@ import yaml
 from .alerting import AlertmanagerClient
 from .config import AppSettings
 from .prometheus_client import PrometheusClient, build_range_frame
+from .rca_engine import EventStore
 
 
 @dataclass(slots=True)
@@ -244,8 +245,8 @@ def _evaluate_series(
     }
 
 
-def _send_alert(
-    alert_client: AlertmanagerClient,
+def _store_alert(
+    store: EventStore,
     application: str,
     metric: BaselineMetricRule,
     series_name: str,
@@ -274,34 +275,30 @@ def _send_alert(
         else "값 기준 없음"
     )
 
-    alert_client.send_anomaly(
-        labels={
-            "service": application,
-            "severity": severity,
-            "detector": "baseline",
-            "metric": metric.key,
-            **labels,
-        },
-        annotations={
-            "summary": f"[AIOps][{severity}] {instance} {metric_name} 이상 탐지",
-            "description": (
-                f"서비스: {application}\n"
-                f"인스턴스: {instance}\n"
-                f"탐지 방식: 기준선 감시\n"
-                f"메트릭: {metric_name}\n"
-                f"심각도: {severity}\n"
-                f"상태: firing\n\n"
-                f"현재값: {_format_value(current_value, metric.unit)}\n"
-                f"기준값: {_format_value(baseline_median, metric.unit)}\n"
-                f"이상 점수(z): {latest_z:.2f}\n"
-                f"최근 {observed_points}개 포인트 중 {warn_hits}회 경고 조건 충족\n"
-                f"경고 충족 시각:\n{warn_breach_points}\n"
-                f"경고 판정 기준: 최근 {observed_points}개 포인트 중 {required_breaches}개 이상에서 z >= {metric.warn_z:.1f} 이고 현재값 >= {warn_value_text}\n"
-                f"치명 판정 기준: 최근 {observed_points}개 포인트 중 {required_breaches}개 이상에서 z >= {metric.critical_z:.1f} 이고 현재값 >= {critical_value_text}\n"
-                f"탐지 시각: {_format_detected_at(detected_at)}"
-            ),
-        },
+    description = (
+        f"서비스: {application}\n"
+        f"인스턴스: {instance}\n"
+        f"탐지 방식: 기준선 감시\n"
+        f"메트릭: {metric_name}\n"
+        f"심각도: {severity}\n"
+        f"상태: firing\n\n"
+        f"현재값: {_format_value(current_value, metric.unit)}\n"
+        f"기준값: {_format_value(baseline_median, metric.unit)}\n"
+        f"이상 점수(z): {latest_z:.2f}\n"
+        f"최근 {observed_points}개 포인트 중 {warn_hits}회 경고 조건 충족\n"
     )
+
+    store.add_event(
+        timestamp=detected_at,
+        application=application,
+        instance=instance,
+        source="baseline",
+        severity=severity,
+        metric=metric.key,
+        score=latest_z,
+        description=description,
+    )
+    # (Remaining annotations/labels omitted to simply store in the DB for RCA)
 
 
 def run_baseline_detection(
@@ -318,7 +315,7 @@ def run_baseline_detection(
     )
 
     client = PrometheusClient(settings.prometheus)
-    alert_client = AlertmanagerClient(settings.alertmanager)
+    store = EventStore(settings.artifacts.rca_db_path)
 
     findings: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []
@@ -364,7 +361,7 @@ def run_baseline_detection(
             findings.append(result)
 
             if not dry_run:
-                _send_alert(alert_client, rules.application, metric, column, finding, now)
+                _store_alert(store, rules.application, metric, column, finding, now)
 
     return {
         "status": "baseline_detected",

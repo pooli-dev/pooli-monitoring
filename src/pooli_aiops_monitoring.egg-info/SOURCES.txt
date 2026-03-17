@@ -3,6 +3,7 @@ pyproject.toml
 src/pooli_aiops/__init__.py
 src/pooli_aiops/__main__.py
 src/pooli_aiops/alerting.py
+src/pooli_aiops/baseline.py
 src/pooli_aiops/cli.py
 src/pooli_aiops/config.py
 src/pooli_aiops/contracts.py
@@ -10,6 +11,7 @@ src/pooli_aiops/detector.py
 src/pooli_aiops/features.py
 src/pooli_aiops/modeling.py
 src/pooli_aiops/prometheus_client.py
+src/pooli_aiops/rca_engine.py
 src/pooli_aiops/synthetic_data.py
 src/pooli_aiops/trainer.py
 src/pooli_aiops_monitoring.egg-info/PKG-INFO
