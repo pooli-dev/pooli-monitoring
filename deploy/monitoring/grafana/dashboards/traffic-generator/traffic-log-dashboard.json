@@ -71,7 +71,7 @@
         "multi": true,
         "refresh": 2,
         "hide": 0
-     }
+      }
     ]
   },
   "links": [],
@@ -195,27 +195,27 @@
       ]
     },
     {
-       "id": 6,
-       "type": "stat",
-       "title": "Deducted Bytes Total (5m)",
-       "datasource": "Loki",
-       "gridPos": {
-          "h": 5,
-          "w": 6,
-          "x": 0,
-          "y": 5
-       },
+      "id": 6,
+      "type": "stat",
+      "title": "Deducted Data Total (MB)",
+      "datasource": "Loki",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 5
+      },
       "targets": [
-      {
-          "expr": "sum(sum_over_time({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\", final_status=~\"${final_status:regex}\"} |= \"traffic_stream_record_done\" | logfmt | unwrap deducted_total_bytes [5m]))",
+        {
+          "expr": "sum(sum_over_time({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\", final_status=~\"${final_status:regex}\"} |= \"traffic_stream_record_done\" | json | line_format \"{{.message}}\" | logfmt | unwrap deducted_total_bytes [$__range])) / 1048576",
           "refId": "A"
-      }
-    ]
-   },
+        }
+      ]
+    },
     {
       "id": 7,
       "type": "timeseries",
-      "title": "API Total Data / sec",
+      "title": "API Total Data / sec (MB/s)",
       "datasource": "Loki",
       "gridPos": {
         "h": 8,
@@ -225,7 +225,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\", final_status=~\"${final_status:regex}\"} |= \"traffic_stream_record_done\" | logfmt | unwrap api_total_data [5m]))",
+          "expr": "sum(rate({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\", final_status=~\"${final_status:regex}\"} |= \"traffic_stream_record_done\" | json | line_format \"{{.message}}\" | logfmt | unwrap api_total_data [5m])) / 1048576",
           "refId": "A"
         }
       ]
@@ -233,7 +233,7 @@
     {
       "id": 8,
       "type": "timeseries",
-      "title": "API Remaining Data (avg)",
+      "title": "API Remaining Data (avg MB)",
       "datasource": "Loki",
       "gridPos": {
         "h": 8,
@@ -243,7 +243,7 @@
       },
       "targets": [
         {
-          "expr": "avg_over_time({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\", final_status=~\"${final_status:regex}\"} |= \"traffic_stream_record_done\" | logfmt | unwrap api_remaining_data [5m])",
+          "expr": "avg(avg_over_time({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\", final_status=~\"${final_status:regex}\"} |= \"traffic_stream_record_done\" | json | line_format \"{{.message}}\" | logfmt | unwrap api_remaining_data [5m])) / 1048576",
           "refId": "A"
         }
       ]
@@ -251,7 +251,7 @@
     {
       "id": 9,
       "type": "bargauge",
-      "title": "Top 10 line_id by Deducted Bytes",
+      "title": "Top 10 line_id by Deducted Data (MB)",
       "datasource": "Loki",
       "gridPos": {
         "h": 8,
@@ -261,7 +261,7 @@
       },
       "targets": [
         {
-          "expr": "topk(10, sum by (line_id) (rate({job=\"traffic-generator\", family_id=~\"${family_id:regex}\", final_status=~\"${final_status:regex}\"} |= \"traffic_stream_record_done\" | logfmt | unwrap deducted_total_bytes [5m])))",
+          "expr": "topk(10, sum by (line_id) (sum_over_time({job=\"traffic-generator\", family_id=~\"${family_id:regex}\", final_status=~\"${final_status:regex}\"} |= \"traffic_stream_record_done\" | json | line_format \"{{.message}}\" | logfmt | unwrap deducted_total_bytes [$__interval])) / 1048576)",
           "refId": "A"
         }
       ]
@@ -318,7 +318,7 @@
       },
       "targets": [
         {
-          "expr": "avg_over_time({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\"} |= \"traffic_stream_record_done\" | logfmt | unwrap latency [5m])",
+          "expr": "avg(rate({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\"} |= \"traffic_stream_record_done\" | json | logfmt | unwrap latency [5m]))",
           "refId": "A"
         }
       ]
@@ -336,7 +336,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (last_lua_status) (count_over_time({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\"} |= \"traffic_stream_record_done\" | logfmt [5m]))",
+          "expr": "sum by (last_lua_status) (count_over_time({job=\"traffic-generator\", line_id=~\"${line_id:regex}\", family_id=~\"${family_id:regex}\"} |= \"traffic_stream_record_done\" | json | line_format \"{{.message}}\" | logfmt [5m]))",
           "refId": "A"
         }
       ]
