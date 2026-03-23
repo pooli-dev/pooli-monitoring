@@ -1,130 +1,304 @@
 # pooli-monitoring
 
-`pooli-be` 모니터링을 위한 `PyOD` 기반 AIOps 스캐폴드입니다.
+`pooli-monitoring` 은 Prometheus 메트릭을 기반으로 학습, 이상 탐지, 알림 전송, 간단한 RCA 추정을 수행하는 PyOD 기반 AIOps runner 입니다. 저장소 안에는 baseline 기반 인프라 감지 규칙과 Prometheus, Grafana, Loki, Alertmanager 샘플 스택도 함께 포함되어 있습니다.
 
-## 목적
+## 프로젝트 소개
 
-이 저장소는 `pooli-be` 애플리케이션 레포와 분리되어 있습니다.
+이 저장소는 `pooli-be` 같은 서비스를 대상으로 다음 흐름을 구성하는 데 초점을 둡니다.
 
-- `trainer`는 Prometheus 메트릭에서 정상 패턴을 학습합니다.
-- `detector`는 최신 메트릭 구간을 읽고, feature를 만든 뒤, 이상 점수를 계산하고, 필요하면 Alertmanager로 알림을 보냅니다.
-- `pooli-be`는 나중에 메트릭만 노출하면 되고, 모델 코드는 이 저장소에 유지합니다.
+- Prometheus 메트릭 수집
+- 계약 파일(`metrics_contract.yaml`) 기반 학습 데이터 정의
+- PyOD 모델 학습 및 아티팩트 저장
+- 최신 메트릭 구간 이상 탐지
+- Alertmanager 알림 전송
+- 감지 이벤트 저장 및 RCA 후보 추정
 
-## 구조
+예제 설정은 `pooli-be`를 기준으로 되어 있지만, 계약 파일과 설정 파일을 바꾸면 다른 서비스에도 같은 흐름을 적용할 수 있습니다.
+
+## 핵심 기능과 구성
+
+### 주요 CLI 명령
+
+- `train`: Prometheus 히스토리 또는 CSV 파일로 모델을 학습합니다.
+- `detect`: 최신 메트릭 구간을 읽어 이상 여부를 판정합니다.
+- `baseline-detect`: 단일 인프라 메트릭에 baseline 기반 이상 감지를 적용합니다.
+- `rca`: 저장된 이벤트를 시간 구간별로 묶어 유력 원인 계층을 추정합니다.
+- `generate-dataset`: 분류, 이상 탐지, 예측 실험용 synthetic dataset을 생성합니다.
+
+### 저장소 구조
 
 ```text
 pooli-monitoring/
   config/
+    baseline_rules.yaml
     metrics_contract.example.yaml
     settings.example.yaml
+  deploy/
+    monitoring/
+    systemd/
   artifacts/
-    .gitkeep
   src/pooli_aiops/
-    __init__.py
-    __main__.py
-    alerting.py
-    cli.py
-    config.py
-    contracts.py
-    detector.py
-    features.py
-    modeling.py
-    prometheus_client.py
-    trainer.py
   pyproject.toml
   README.md
 ```
 
+### 아티팩트와 데이터 흐름
+
+- 학습 결과는 기본적으로 `artifacts/` 아래에 저장됩니다.
+- 모델 학습 후 `model.joblib`, `scaler.joblib`, `metadata.json` 이 생성됩니다.
+- RCA 이벤트 저장소는 설정에 따라 `artifacts/rca/rca_events.db` 같은 경로를 사용합니다.
+- synthetic dataset 생성 시 기본 출력 경로는 `artifacts/synthetic_dataset/` 입니다.
+
 ## 빠른 시작
 
-1. 가상환경을 생성합니다.
-2. `pip install -e .` 로 의존성을 설치합니다.
-3. `config/settings.example.yaml` 을 `config/settings.yaml` 로 복사한 뒤 Prometheus와 Alertmanager 주소를 수정합니다.
-4. `config/metrics_contract.example.yaml` 을 `config/metrics_contract.yaml` 로 복사한 뒤 필요하면 PromQL을 수정합니다.
-5. 모델을 학습합니다.
-6. detector를 실행합니다.
+### 1. 환경 준비
 
-예시 명령:
+이 프로젝트는 Python `>=3.11` 을 요구합니다.
 
 ```bash
-cd /opt/pooli-monitoring
+python -m venv .venv
 source .venv/bin/activate
-python -m pooli_aiops train --settings config/settings.yaml --contract config/metrics_contract.yaml
-python -m pooli_aiops detect --settings config/settings.yaml --contract config/metrics_contract.yaml --dry-run
+pip install -e .
 ```
 
-## API Dashboard
+Windows 환경이라면 활성화 명령만 다음과 같이 바꾸면 됩니다.
 
-### Variables
+```powershell
+.venv\Scripts\Activate.ps1
+```
 
-| 항목 | 의미 | 어떻게 쓰는지 |
-| --- | --- | --- |
-| `instance` | 어떤 `pooli-be` 인스턴스의 메트릭을 볼지 고르는 필터 | 특정 서버만 보고 싶으면 하나 선택, 전체 추세를 보려면 `All` |
-| `uri` | 어떤 API URI를 볼지 고르는 필터 | 특정 API만 보고 싶을 때 사용, 전체 비교면 `All` |
+### 2. 설정 파일 준비
 
-### Panels
+예제 설정을 복사해서 실제 실행 파일을 만듭니다.
 
-| 패널명 | 의미 | 해석 포인트 | 주의사항 |
-| --- | --- | --- | --- |
-| `Total RPS` | 전체 API 요청 처리량 | 현재 API 트래픽 크기를 빠르게 확인 | 정상/비정상은 서비스 평시 기준과 비교해야 함 |
-| `Error Rate (%)` | 전체 요청 중 5xx 비율 | 장애가 실제 사용자 오류로 이어지는지 확인 | 현재 5xx 기준이라 4xx는 포함되지 않음 |
-| `Overall Latency P95` | 전체 API 응답시간의 P95 | 느린 요청이 얼마나 늘었는지 확인 | 평균보다 P95가 실무에서 더 중요 |
-| `Active Endpoints` | 최근 요청이 들어온 URI 개수 | 얼마나 다양한 API가 호출 중인지 확인 | 호출량이 아닌 종류 수임 |
-| `RPS by Endpoint` | URI별, Method별 요청량 추이 | 어떤 API가 트래픽을 많이 먹는지 확인 | 특정 시점 급증 API 찾기에 유용 |
-| `Latency P95 by Endpoint` | URI별, Method별 응답시간 P95 | 느려진 API를 빠르게 식별 | 일부 저트래픽 API는 변동성이 클 수 있음 |
-| `Error Rate (%) by Endpoint` | URI별, Method별 5xx 비율 | 어떤 API가 실제 오류를 내는지 확인 | 트래픽이 아주 적은 API는 비율이 크게 튈 수 있음 |
-| `Status Code Distribution` | 상태코드별 요청량 분포 | 200/400/500대 비중 변화 확인 | 문제 판단 시 절대값과 비율을 같이 봐야 함 |
-| `Top 10 Slowest Endpoints (P95)` | 가장 느린 API 상위 10개 | 병목 API를 우선순위로 볼 때 사용 | 현재 `UNKNOWN`, `/actuator*`, `/favicon.ico`는 제외 |
-| `Top 10 Most Requested Endpoints` | 가장 많이 호출되는 API 상위 10개 | 트래픽 집중 API 파악에 유용 | 현재 `UNKNOWN`, `/actuator*`, `/favicon.ico`는 제외 |
+```bash
+cp config/settings.example.yaml config/settings.yaml
+cp config/metrics_contract.example.yaml config/metrics_contract.yaml
+```
 
----
+Windows 환경이라면 `cp` 대신 `copy` 를 사용하면 됩니다.
 
-## DB Dashboard
+수정이 필요한 대표 항목은 다음과 같습니다.
 
-### Variables
+- `config/settings.yaml`
+  Prometheus 주소, Alertmanager 주소, 아티팩트 저장 위치, 모델 파라미터
+- `config/metrics_contract.yaml`
+  서비스 이름, 사용할 메트릭 키, PromQL, 라벨 규칙
 
-| 항목 | 의미 | 어떻게 쓰는지 |
-| --- | --- | --- |
-| `mapper` | 어떤 MyBatis Mapper를 볼지 고르는 필터 | 특정 Mapper만 보고 싶으면 선택, 전체면 `All` |
-| `operation` | Mapper 내부 어떤 쿼리 작업을 볼지 고르는 필터 | 특정 메서드 단위 분석 시 사용 |
+### 3. 첫 학습 실행
 
-### Panels
+```bash
+python -m pooli_aiops train \
+  --settings config/settings.yaml \
+  --contract config/metrics_contract.yaml
+```
 
-| 패널명 | 의미 | 해석 포인트 | 주의사항 |
-| --- | --- | --- | --- |
-| `Total Query RPS` | 전체 DB 쿼리 실행량 | 현재 DB 부하 크기를 빠르게 확인 | API 요청 수와 1:1 대응은 아님 |
-| `Overall Query P95` | 전체 쿼리 지연시간 P95 | 전반적인 DB 응답 저하 여부 확인 | 느린 소수 쿼리 영향 파악에 유리 |
-| `Overall Query P99` | 전체 쿼리 지연시간 P99 | 극단적으로 느린 쿼리 존재 여부 확인 | P95보다 더 민감해서 튐이 클 수 있음 |
-| `Active Mappers` | 최근 실행된 Mapper 수 | 어떤 DB 기능 영역이 활성화됐는지 확인 | 호출량이 아닌 종류 수임 |
-| `Query Latency P95 by Mapper` | Mapper별 쿼리 지연시간 P95 | 어느 Mapper 계층이 느린지 확인 | 상세 원인은 operation 패널에서 추가 확인 |
-| `Query Latency P95 by Operation` | Mapper+Operation별 쿼리 지연시간 P95 | 어떤 메서드가 느린지 직접 식별 | 실제 병목 SQL 후보를 좁히는 데 유용 |
-| `Query RPS by Mapper` | Mapper별 쿼리 실행량 | 어떤 기능 영역이 DB를 많이 쓰는지 확인 | 고트래픽 Mapper와 고지연 Mapper를 같이 봐야 함 |
-| `Query RPS by Operation` | Mapper+Operation별 쿼리 실행량 | 어떤 쿼리가 가장 자주 호출되는지 확인 | 빈도 높고 느린 쿼리가 우선 개선 대상 |
-| `Top 10 Slowest Queries (P95)` | 가장 느린 쿼리 상위 10개 | 성능 최적화 우선순위 선정용 | 현재 선택한 `mapper`, `operation` 필터 영향을 받음 |
-| `Top 10 Most Called Queries` | 가장 많이 호출된 쿼리 상위 10개 | 부하 집중 지점 파악용 | 호출량만 높고 문제 없을 수도 있으니 P95와 함께 봐야 함 |
+학습이 끝나면 `artifacts/` 아래에 모델, 스케일러, 메타데이터가 저장됩니다.
 
----
+### 4. 첫 탐지 실행
 
-## 같이 보는 방법
+```bash
+python -m pooli_aiops detect \
+  --settings config/settings.yaml \
+  --contract config/metrics_contract.yaml \
+  --dry-run
+```
 
-| 상황 | 먼저 볼 항목 | 다음에 볼 항목 |
-| --- | --- | --- |
-| API가 느려짐 | `Overall Latency P95` | `Latency P95 by Endpoint` -> `Top 10 Slowest Endpoints (P95)` |
-| API 오류 증가 | `Error Rate (%)` | `Error Rate (%) by Endpoint` -> `Status Code Distribution` |
-| DB 병목 의심 | `Overall Query P95`, `Overall Query P99` | `Query Latency P95 by Operation` -> `Top 10 Slowest Queries (P95)` |
-| 트래픽 급증 | `Total RPS`, `Total Query RPS` | `Top 10 Most Requested Endpoints`, `Top 10 Most Called Queries` |
-| 특정 기능 장애 분석 | `uri` 또는 `mapper` 필터 적용 | API 패널과 DB 패널을 같은 시간대에서 같이 비교 |
+`--dry-run` 을 제거하면 이상 탐지 시 Alertmanager로 알림을 전송합니다.
+
+## 주요 명령
+
+### `train`
+
+Prometheus 기반 학습:
+
+```bash
+python -m pooli_aiops train \
+  --settings config/settings.yaml \
+  --contract config/metrics_contract.yaml
+```
+
+CSV 기반 학습:
+
+```bash
+python -m pooli_aiops train \
+  --settings config/settings.yaml \
+  --input-csv artifacts/synthetic_dataset/synthetic_raw_timeseries.csv \
+  --timestamp-column timestamp \
+  --metric-columns traffic_stream_length,traffic_stream_pending_message,traffic_stream_requests_tps \
+  --application traffic-generator
+```
+
+필수/중요 옵션:
+
+- `--settings`: 설정 YAML 경로
+- `--contract`: Prometheus 학습용 계약 파일
+- `--input-csv`: CSV 입력 파일
+- `--start`, `--end`: UTC ISO-8601 학습 기간
+- `--row-filter-column`, `--row-filter-value`: CSV 행 필터링
+
+### `detect`
+
+```bash
+python -m pooli_aiops detect \
+  --settings config/settings.yaml \
+  --contract config/metrics_contract.yaml \
+  --dry-run
+```
+
+필수/중요 옵션:
+
+- `--settings`: 설정 YAML 경로
+- `--contract`: 메트릭 계약 파일
+- `--time`: 탐지 시각(UTC ISO-8601)
+- `--dry-run`: 알림 전송 없이 판정만 수행
+
+### `baseline-detect`
+
+```bash
+python -m pooli_aiops baseline-detect \
+  --settings config/settings.yaml \
+  --rules config/baseline_rules.yaml \
+  --dry-run
+```
+
+이 명령은 `node-exporter`, `mysql` 같은 인프라 메트릭에 적합한 단일 메트릭 baseline 감지를 수행합니다.
+
+필수/중요 옵션:
+
+- `--settings`: 설정 YAML 경로
+- `--rules`: baseline 규칙 파일
+- `--time`: 탐지 시각(UTC ISO-8601)
+- `--dry-run`: 알림 전송 없이 판정만 수행
+
+### `rca`
+
+```bash
+python -m pooli_aiops rca \
+  --settings config/settings.yaml \
+  --dry-run \
+  --time-window-minutes 5
+```
+
+`detect` 와 `baseline-detect` 가 저장한 이벤트를 묶어서, OS, DB, Redis, WAS, Client 계층 중 어디가 유력한지 추정합니다.
+
+필수/중요 옵션:
+
+- `--settings`: 설정 YAML 경로
+- `--dry-run`: RCA 알림 전송 없이 분석만 수행
+- `--time-window-minutes`: 이벤트 묶음 시간 창
 
 
-## 현재 전제
+### `generate-dataset`
 
-- Prometheus를 메트릭의 기준 데이터 소스로 사용합니다.
-- contract 파일이 논리 메트릭 이름과 실제 PromQL 매핑을 담당합니다.
-- PyOD는 시계열 예측 전용 라이브러리가 아니기 때문에 window 기반 feature engineering을 사용합니다.
-- 처음에는 `ECOD`, `HBOS`, `IForest` 같은 가벼운 모델부터 시작하는 것을 권장합니다.
+```bash
+python -m pooli_aiops generate-dataset \
+  --output-dir artifacts/synthetic_dataset \
+  --hours 24 \
+  --freq-seconds 1 \
+  --future-seconds 60 \
+  --rolling-window 30
+```
 
-## pooli-be 연동의 다음 단계
+생성 결과에는 raw 시계열, feature dataset, anomaly train/eval CSV, 이벤트 목록, 메타데이터가 포함됩니다.
 
-나중에 `pooli-be`가 contract를 만족하는 메트릭을 노출해야 합니다.
-모니터링 코드는 `request_rate`, `error_rate`, `p95_latency_ms` 같은 논리 키를 계속 사용합니다.
-실제 raw metric 이름이 바뀌더라도 contract 파일만 수정하면 되도록 설계했습니다.
+필수/중요 옵션:
+
+- `--output-dir`: 출력 디렉터리
+- `--hours`: 시계열 길이
+- `--freq-seconds`: 샘플링 주기
+- `--future-seconds`: 미래 라벨 시점
+- `--rolling-window`: 윈도우 크기
+- `--seed`: 난수 시드
+
+## 설정 파일
+
+### `config/settings*.yaml`
+
+애플리케이션 전체 동작을 제어합니다.
+
+- `prometheus`: base URL, timeout, query step
+- `alertmanager`: 알림 전송 여부와 대상 주소
+- `artifacts`: 모델과 RCA DB 저장 위치
+- `model`: 모델 이름, contamination, 학습 기간, rolling window
+- `detection`: lookback 길이, 임계값 마진
+
+대표 파일:
+
+- `config/settings.example.yaml`: 기본 예제
+- `config/settings.yaml`: 실제 실행용 설정
+- `config/settings.traffic_db.yaml`: 특정 운영 시나리오용 변형 설정
+
+### `config/metrics_contract*.yaml`
+
+Prometheus에서 어떤 메트릭을 어떤 PromQL로 읽을지 정의합니다.
+
+- `application`: 대상 서비스 이름
+- `metrics[*].key`: 코드 내부 메트릭 식별자
+- `metrics[*].promql`: 실제 Prometheus 쿼리
+- `metrics[*].required`: 필수 메트릭 여부
+- `labels`: 필수, 권장, 금지 라벨 규칙
+
+대표 파일:
+
+- `config/metrics_contract.example.yaml`: `pooli-be` 예제 계약
+- `config/metrics_contract.yaml`: 실제 실행용 계약
+- `config/metrics_contract.traffic_db.yaml`
+- `config/metrics_contract.traffic_db_query.yaml`
+- `config/metrics_contract.was_db.yaml`
+
+### `config/baseline_rules.yaml`
+
+단일 메트릭 baseline 감지 규칙을 정의합니다.
+
+- 감시 대상 메트릭 목록
+- 방향성(`high`, `low`)
+- 경고/치명 임계값
+- baseline 계산 파라미터
+- 인스턴스 라벨 기준 집계 방식
+
+## 배포 개요
+
+### systemd 타이머
+
+`deploy/systemd/` 에 주기 실행용 unit 파일이 포함되어 있습니다.
+
+- `pooli-traffic-detect.service` / `.timer`: 트래픽 이상 탐지 주기 실행
+- `pooli-baseline-detect.service` / `.timer`: baseline 이상 탐지 주기 실행
+- `pooli-rca.service` / `.timer`: RCA 분석 주기 실행
+
+운영 환경에서는 이 unit 파일을 `/opt/pooli-monitoring` 기준 경로에 맞춰 배포해서 사용할 수 있습니다.
+
+### 모니터링 스택
+
+`deploy/monitoring/docker-compose.yml` 은 다음 구성 요소를 한 번에 띄우는 예제입니다.
+
+- Prometheus
+- Alertmanager
+- Loki
+- Promtail
+- Grafana
+
+즉, 이 저장소는 AIOps runner만 있는 것이 아니라 대시보드와 알림 구성을 같이 실험할 수 있는 샘플 모니터링 스택도 제공합니다.
+
+## 대시보드 요약
+
+Grafana 대시보드는 `deploy/monitoring/grafana/dashboards/` 아래에 포함되어 있습니다.
+
+- `pooli/api-endpoint-dashboard.json`
+  API 요청량, 오류율, 지연 시간 중심으로 서비스 상태를 봅니다.
+- `pooli/db-query-dashboard.json`
+  DB 쿼리 지연, 호출량, 병목 지점을 확인합니다.
+- `pooli/pooli-infrastructure-overview-dashboard.json`
+  인프라 상태를 상위 레벨에서 빠르게 훑습니다.
+
+README에는 사용 목적만 요약하고, 패널별 상세 해석은 대시보드 JSON과 Grafana 화면을 기준으로 확인하는 방식이 적합합니다.
+
+## 한계와 전제
+
+- 기본 데이터 소스는 Prometheus 입니다.
+- 모델은 `ECOD`, `HBOS`, `IForest` 같은 가벼운 PyOD 계열을 전제로 합니다.
+- 충분한 학습 히스토리가 없으면 `train` 이 실패할 수 있습니다.
+- 탐지 결과는 RCA DB에 저장된 이벤트를 바탕으로 후속 RCA 분석에 사용됩니다.
+- RCA 결과는 확정 진단이 아니라 시간 상관관계와 메트릭 성격을 이용한 추정 결과입니다.
+- 운영 초기에는 트래픽 기반 이상 탐지보다 `baseline-detect` 중심으로 먼저 안정화하는 편이 더 적합할 수 있습니다.
